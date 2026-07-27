@@ -355,15 +355,14 @@ export default function Home() {
         <div className="section-inner" data-depth="4">
           <div className="feature-atlas-intro" data-cinematic-reveal>
             <div>
-              <div className="eyebrow">The complete EduGrade platform</div>
+              <div className="eyebrow">Complete capability map</div>
               <h2 className="display section-heading">
-                Every feature, connected to the work around it.
+                Everything connected, without the clutter.
               </h2>
             </div>
             <p>
-              Explore the complete teacher, student, AI, and platform
-              foundation—from secure access and planning to published results
-              and progress intelligence.
+              Filter by workspace, then select a capability area to see what is
+              included across the complete teaching cycle.
             </p>
           </div>
           <div data-cinematic-reveal>

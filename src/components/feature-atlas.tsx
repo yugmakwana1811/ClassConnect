@@ -5,6 +5,7 @@ import {
   BookOpenCheck,
   BrainCircuit,
   Check,
+  ChevronRight,
   ClipboardCheck,
   FileUp,
   LibraryBig,
@@ -153,8 +154,30 @@ const filters: Array<{ id: Filter; label: string }> = [
 
 export function FeatureAtlas() {
   const [filter, setFilter] = useState<Filter>("all");
+  const [selectedGroup, setSelectedGroup] = useState(groups[0].title);
   const reduceMotion = useReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const groupRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  function getVisibleGroups(nextFilter: Filter) {
+    return groups
+      .map((group) => ({
+        ...group,
+        features:
+          nextFilter === "all"
+            ? group.features
+            : group.features.filter((feature) =>
+                feature.audiences.includes(nextFilter),
+              ),
+      }))
+      .filter((group) => group.features.length > 0);
+  }
+
+  function selectFilter(nextFilter: Filter) {
+    const nextGroups = getVisibleGroups(nextFilter);
+    setFilter(nextFilter);
+    setSelectedGroup(nextGroups[0]?.title ?? groups[0].title);
+  }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex: number | null = null;
@@ -167,19 +190,40 @@ export function FeatureAtlas() {
     if (nextIndex === null) return;
     event.preventDefault();
     const nextFilter = filters[nextIndex];
-    setFilter(nextFilter.id);
+    selectFilter(nextFilter.id);
     tabRefs.current[nextIndex]?.focus();
   }
 
-  const visibleGroups = groups
-    .map((group) => ({
-      ...group,
-      features:
-        filter === "all"
-          ? group.features
-          : group.features.filter((feature) => feature.audiences.includes(filter)),
-    }))
-    .filter((group) => group.features.length > 0);
+  function handleGroupKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    let nextIndex: number | null = null;
+
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (index + 1) % visibleGroups.length;
+    }
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (index - 1 + visibleGroups.length) % visibleGroups.length;
+    }
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = visibleGroups.length - 1;
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    setSelectedGroup(visibleGroups[nextIndex].title);
+    groupRefs.current[nextIndex]?.focus();
+  }
+
+  const visibleGroups = getVisibleGroups(filter);
+  const activeGroup =
+    visibleGroups.find((group) => group.title === selectedGroup) ??
+    visibleGroups[0] ??
+    groups[0];
+  const activeGroupIndex = visibleGroups.findIndex(
+    (group) => group.title === activeGroup.title,
+  );
+  const ActiveIcon = activeGroup.icon;
 
   return (
     <div className="feature-atlas">
@@ -197,7 +241,7 @@ export function FeatureAtlas() {
                 id={`feature-atlas-tab-${item.id}`}
                 tabIndex={active ? 0 : -1}
                 key={item.id}
-                onClick={() => setFilter(item.id)}
+                onClick={() => selectFilter(item.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, filters.indexOf(item))}
                 ref={(element) => {
                   tabRefs.current[filters.indexOf(item)] = element;
@@ -224,62 +268,102 @@ export function FeatureAtlas() {
         </span>
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
+      <div
+        className="feature-atlas-panel"
+        id="feature-atlas-panel"
+        role="tabpanel"
+        aria-labelledby={`feature-atlas-tab-${filter}`}
+      >
         <motion.div
-          className="feature-atlas-grid"
+          className="feature-atlas-grid feature-atlas-compact-grid"
           data-filter={filter}
-          id="feature-atlas-panel"
           key={filter}
-          role="tabpanel"
-          aria-labelledby={`feature-atlas-tab-${filter}`}
           initial={reduceMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
           transition={
             reduceMotion
               ? { duration: 0 }
-              : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }
           }
+          aria-label="Capability areas"
         >
           {visibleGroups.map((group, index) => {
             const Icon = group.icon;
+            const active = group.title === activeGroup.title;
             return (
-              <motion.article
-                className="feature-atlas-card"
+              <motion.button
+                className={`feature-atlas-group${active ? " is-active" : ""}`}
+                type="button"
                 key={group.title}
-                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                id={`feature-atlas-group-${index}`}
+                aria-expanded={active}
+                aria-controls="feature-atlas-detail"
+                onClick={() => setSelectedGroup(group.title)}
+                onKeyDown={(event) => handleGroupKeyDown(event, index)}
+                ref={(element) => {
+                  groupRefs.current[index] = element;
+                }}
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
-                  duration: reduceMotion ? 0 : 0.25,
-                  delay: reduceMotion ? 0 : Math.min(index * 0.025, 0.15),
+                  duration: reduceMotion ? 0 : 0.24,
+                  delay: reduceMotion ? 0 : Math.min(index * 0.02, 0.12),
                   ease: [0.22, 1, 0.36, 1],
                 }}
               >
-                <div className="feature-atlas-card-head">
-                  <span className="feature-atlas-icon" aria-hidden="true">
-                    <Icon size={19} />
+                <span className="feature-atlas-icon" aria-hidden="true">
+                  <Icon size={18} />
+                </span>
+                <span className="feature-atlas-group-copy">
+                  <span>
+                    {group.phase} · {group.features.length}
                   </span>
-                  <span className="feature-atlas-phase">{group.phase}</span>
-                </div>
-                <h3>{group.title}</h3>
-                <ul>
-                  {group.features.map((feature) => (
-                    <li key={feature.label}>
-                      <Check size={14} aria-hidden="true" />
-                      <span>{feature.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.article>
+                  <strong>{group.title}</strong>
+                </span>
+                <ChevronRight size={16} aria-hidden="true" />
+              </motion.button>
             );
           })}
         </motion.div>
-      </AnimatePresence>
+        <p className="feature-atlas-swipe-hint" aria-hidden="true">
+          Swipe to explore all capability areas →
+        </p>
 
-      <div className="feature-atlas-summary">
-        <span>10 connected capability areas</span>
-        <span>2 protected role workspaces</span>
-        <span>1 teacher-controlled learning record</span>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.section
+            className="feature-atlas-detail"
+            id="feature-atlas-detail"
+            key={`${filter}-${activeGroup.title}`}
+            role="region"
+            aria-labelledby={`feature-atlas-group-${activeGroupIndex}`}
+            initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+            }
+          >
+            <div className="feature-atlas-detail-heading">
+              <span className="feature-atlas-detail-icon" aria-hidden="true">
+                <ActiveIcon size={20} />
+              </span>
+              <div>
+                <span>{activeGroup.phase}</span>
+                <h3>{activeGroup.title}</h3>
+              </div>
+            </div>
+            <ul>
+              {activeGroup.features.map((feature) => (
+                <li key={feature.label}>
+                  <Check size={15} aria-hidden="true" />
+                  <span>{feature.label}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.section>
+        </AnimatePresence>
       </div>
     </div>
   );

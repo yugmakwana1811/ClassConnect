@@ -68,9 +68,13 @@ const tools = [
 export default async function AITools({
   searchParams,
 }: {
-  searchParams: Promise<{ generation?: string; error?: string }>;
+  searchParams: Promise<{
+    generation?: string;
+    error?: string;
+    success?: string;
+  }>;
 }) {
-  const [{ generation, error }, user] = await Promise.all([
+  const [{ generation, error, success }, user] = await Promise.all([
     searchParams,
     requireUser("TEACHER"),
   ]);
@@ -91,7 +95,7 @@ export default async function AITools({
         title="Start with a thoughtful draft"
         description="Generate a teaching suggestion, shape it with your expertise, and approve only when it is right for your class."
       />
-      <Alert error={error} />
+      <Alert error={error} success={success} />
       <SafetyNote />
       <div
         style={{

@@ -17,9 +17,10 @@ export default async function AIHelp({
     generation?: string;
     topic?: string;
     error?: string;
+    success?: string;
   }>;
 }) {
-  const [{ generation, topic, error }, user] = await Promise.all([
+  const [{ generation, topic, error, success }, user] = await Promise.all([
     searchParams,
     requireUser("STUDENT"),
   ]);
@@ -35,7 +36,7 @@ export default async function AIHelp({
         title="Get a hint, not a shortcut"
         description="Ask for an explanation or revision plan. EduGrade guides your thinking without completing assessed work for you."
       />
-      <Alert error={error} />
+      <Alert error={error} success={success} />
       <SafetyNote student />
       <div
         style={{
@@ -148,7 +149,10 @@ export default async function AIHelp({
                   style={{ minHeight: 360, lineHeight: 1.65 }}
                 />
                 <input type="hidden" name="approved" value="off" />
-                <SubmitButton className="btn btn-secondary">
+                <SubmitButton
+                  className="btn btn-secondary"
+                  pendingText="Saving notes…"
+                >
                   <PencilLine size={16} /> Save my notes
                 </SubmitButton>
               </form>

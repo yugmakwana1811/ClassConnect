@@ -517,6 +517,11 @@ export async function saveGeneratedContentAction(form: FormData) {
     data: { output, approved },
   });
   revalidatePath(base);
+  const successMessage =
+    user.role === "TEACHER" ? "AI draft saved" : "Notes saved";
+  redirect(
+    `${base}?generation=${encodeURIComponent(id)}&success=${encodeURIComponent(successMessage)}`,
+  );
 }
 
 export async function createAnnouncementAction(form: FormData) {

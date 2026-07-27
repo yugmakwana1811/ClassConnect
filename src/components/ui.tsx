@@ -108,6 +108,8 @@ export function Alert({
   return (
     <div
       className={cn("alert", error ? "alert-error" : "alert-success")}
+      role={error ? "alert" : "status"}
+      aria-live={error ? "assertive" : "polite"}
       style={{
         display: "flex",
         gap: ".6rem",

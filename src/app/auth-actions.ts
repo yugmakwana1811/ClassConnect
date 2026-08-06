@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { createSession } from "@/lib/auth";
+import { createSession, homeForRole } from "@/lib/auth";
 import {
   assertAuthAllowed,
   authThrottleKey,
@@ -12,6 +12,7 @@ import {
   recordAuthFailure,
 } from "@/lib/auth-throttle";
 import { registerSchema } from "@/lib/validation";
+import { generateParentAccessCode } from "@/lib/parent-access";
 
 function value(form: FormData, key: string) {
   return String(form.get(key) ?? "");
@@ -19,6 +20,16 @@ function value(form: FormData, key: string) {
 
 function fail(message: string): never {
   redirect(`/register?error=${encodeURIComponent(message)}`);
+}
+
+async function uniqueParentAccessCode() {
+  let code = "";
+  do {
+    code = generateParentAccessCode();
+  } while (
+    await db.studentProfile.findUnique({ where: { parentAccessCode: code } })
+  );
+  return code;
 }
 
 export async function registerAction(form: FormData) {
@@ -40,6 +51,10 @@ export async function registerAction(form: FormData) {
   try {
     await assertAuthAllowed(throttleKey);
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+    const parentAccessCode =
+      parsed.data.role === "STUDENT"
+        ? await uniqueParentAccessCode()
+        : undefined;
     const user = await db.user.create({
       data: {
         name: parsed.data.name,
@@ -62,8 +77,13 @@ export async function registerAction(form: FormData) {
                   school: parsed.data.school,
                   grade: parsed.data.grade,
                   rollNumber: parsed.data.rollNumber,
+                  parentAccessCode: parentAccessCode!,
                 },
               }
+            : undefined,
+        parentProfile:
+          parsed.data.role === "PARENT"
+            ? { create: { school: parsed.data.school } }
             : undefined,
       },
     });
@@ -72,7 +92,7 @@ export async function registerAction(form: FormData) {
     await db.activityLog.create({
       data: { userId: user.id, action: "Created account", entityType: "User" },
     });
-    redirect(user.role === "TEACHER" ? "/teacher" : "/student");
+    redirect(homeForRole(user.role));
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
     if (

@@ -13,6 +13,11 @@ export async function GET(
       { error: "Authentication required" },
       { status: 401 },
     );
+  if (user.role === "PARENT")
+    return NextResponse.json(
+      { error: "Parent file access is not available here" },
+      { status: 403 },
+    );
   const { kind, id } = await context.params;
   const classAccess =
     user.role === "TEACHER"

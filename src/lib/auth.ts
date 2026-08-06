@@ -56,16 +56,28 @@ export async function getCurrentUser() {
   const session = await db.session.findUnique({
     where: { tokenHash: hash(token) },
     include: {
-      user: { include: { teacherProfile: true, studentProfile: true } },
+      user: {
+        include: {
+          teacherProfile: true,
+          studentProfile: true,
+          parentProfile: true,
+        },
+      },
     },
   });
   if (!session || session.expiresAt < new Date()) return null;
   return session.user;
 }
+
+export function homeForRole(role: Role) {
+  if (role === "TEACHER") return "/teacher";
+  if (role === "PARENT") return "/parent";
+  return "/student";
+}
+
 export async function requireUser(role?: Role) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (role && user.role !== role)
-    redirect(user.role === "TEACHER" ? "/teacher" : "/student");
+  if (role && user.role !== role) redirect(homeForRole(user.role));
   return user;
 }

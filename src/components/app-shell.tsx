@@ -9,6 +9,7 @@ import {
   FileQuestion,
   FileText,
   Home,
+  HeartHandshake,
   Library,
   LogOut,
   Megaphone,
@@ -86,6 +87,32 @@ const studentGroups: LinkGroup[] = [
     ],
   },
 ];
+const parentGroups: LinkGroup[] = [
+  {
+    label: "Family workspace",
+    items: [
+      { href: "/parent", label: "Overview", icon: Home },
+      {
+        href: "/parent/students",
+        label: "My children",
+        icon: HeartHandshake,
+      },
+    ],
+  },
+];
+
+function groupsForRole(role: Role) {
+  if (role === "TEACHER") return teacherGroups;
+  if (role === "PARENT") return parentGroups;
+  return studentGroups;
+}
+
+function roleLabel(role: Role) {
+  if (role === "TEACHER") return "Teacher";
+  if (role === "PARENT") return "Parent";
+  return "Student";
+}
+
 export function AppShell({
   user,
   children,
@@ -93,14 +120,9 @@ export function AppShell({
   user: { name: string; role: Role };
   children: React.ReactNode;
 }) {
-  const groups = user.role === "TEACHER" ? teacherGroups : studentGroups;
+  const groups = groupsForRole(user.role);
   const links = groups.flatMap((group) => group.items);
-  const mobile = [
-    links[0],
-    links[1],
-    user.role === "TEACHER" ? links[2] : links[2],
-    links[links.length - 1],
-  ];
+  const mobile = links.slice(0, 4);
   return (
     <div className="shell">
       <a className="skip-link" href="#main-content">
@@ -110,7 +132,7 @@ export function AppShell({
         <div className="sidebar-brand">
           <Logo />
           <span className="workspace-chip">
-            {user.role === "TEACHER" ? "Teacher" : "Student"} workspace
+            {roleLabel(user.role)} workspace
           </span>
         </div>
         <nav aria-label="Workspace navigation">
@@ -148,7 +170,7 @@ export function AppShell({
       <main className="shell-main" id="main-content">
         <header className="topbar">
           <span className="topbar-role">
-            {user.role === "TEACHER" ? "Teacher workspace" : "Student workspace"}
+            {roleLabel(user.role)} workspace
           </span>
           <div className="topbar-greeting">
             <strong>

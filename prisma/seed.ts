@@ -47,6 +47,17 @@ async function main() {
       role: Role.STUDENT,
     },
   });
+  const parent = await db.user.upsert({
+    where: { email: "parent@edugrade.ai" },
+    update: { passwordHash, role: Role.PARENT },
+    create: {
+      id: "demo-parent-user",
+      email: "parent@edugrade.ai",
+      passwordHash,
+      name: "Kavita Mehta",
+      role: Role.PARENT,
+    },
+  });
   const teacherProfile = await db.teacherProfile.upsert({
     where: { userId: teacher.id },
     update: {},
@@ -59,13 +70,38 @@ async function main() {
   });
   const studentProfile = await db.studentProfile.upsert({
     where: { userId: student.id },
-    update: {},
+    update: { parentAccessCode: "ARJUN2P4KM" },
     create: {
       id: "demo-student-profile",
       userId: student.id,
       school: "Vidya Bharati Senior Secondary School",
       grade: "12",
       rollNumber: "12-C-17",
+      parentAccessCode: "ARJUN2P4KM",
+    },
+  });
+  const parentProfile = await db.parentProfile.upsert({
+    where: { userId: parent.id },
+    update: { school: "Vidya Bharati Senior Secondary School" },
+    create: {
+      id: "demo-parent-profile",
+      userId: parent.id,
+      school: "Vidya Bharati Senior Secondary School",
+    },
+  });
+  await db.parentStudent.upsert({
+    where: {
+      parentId_studentId: {
+        parentId: parentProfile.id,
+        studentId: studentProfile.id,
+      },
+    },
+    update: { relationship: "Mother" },
+    create: {
+      id: "demo-parent-student",
+      parentId: parentProfile.id,
+      studentId: studentProfile.id,
+      relationship: "Mother",
     },
   });
   const classroom = await db.classRoom.upsert({
@@ -706,7 +742,7 @@ async function main() {
     ],
   });
   console.log(
-    "EduGrade AI demo data seeded. Password for both accounts: EduGrade@123",
+    "EduGrade AI demo data seeded. Password for all demo accounts: EduGrade@123",
   );
 }
 

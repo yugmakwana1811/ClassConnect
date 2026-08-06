@@ -46,10 +46,10 @@ export default async function RegisterPage({
         <div className="auth-aside-index">02 / CREATE</div>
         <div>
           <div className="eyebrow">Your secure workspace</div>
-          <h2 className="display">Start teaching or learning with less friction.</h2>
+          <h2 className="display">Keep teaching, learning, and family support connected.</h2>
           <div className="auth-benefits">
             {[
-              "Role-protected teacher and student workspaces",
+              "Role-protected teacher, student, and parent workspaces",
               "Private classroom resources and submissions",
               "Teacher-controlled AI suggestions",
             ].map((item) => (

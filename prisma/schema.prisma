@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   TEACHER
   STUDENT
+  PARENT
 }
 
 enum AssignmentStatus {
@@ -56,6 +57,7 @@ model User {
   updatedAt      DateTime              @updatedAt
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
+  parentProfile  ParentProfile?
   sessions       Session[]
   activities     ActivityLog[]
   generations    AIContentGeneration[]
@@ -92,17 +94,40 @@ model TeacherProfile {
   classes ClassRoom[]
 }
 
+model ParentProfile {
+  id       String          @id @default(cuid())
+  userId   String          @unique
+  school   String?
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students ParentStudent[]
+}
+
 model StudentProfile {
-  id           String             @id @default(cuid())
-  userId       String             @unique
-  school       String?
-  grade        String?
-  rollNumber   String?
-  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollments  ClassEnrollment[]
-  submissions  Submission[]
-  quizAttempts QuizAttempt[]
-  attendance   AttendanceRecord[]
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  school           String?
+  grade            String?
+  rollNumber       String?
+  parentAccessCode String             @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments      ClassEnrollment[]
+  submissions      Submission[]
+  quizAttempts     QuizAttempt[]
+  attendance       AttendanceRecord[]
+  parents          ParentStudent[]
+}
+
+model ParentStudent {
+  id           String         @id @default(cuid())
+  parentId     String
+  studentId    String
+  relationship String?
+  linkedAt     DateTime       @default(now())
+  parent       ParentProfile  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@index([studentId])
 }
 
 model ClassRoom {

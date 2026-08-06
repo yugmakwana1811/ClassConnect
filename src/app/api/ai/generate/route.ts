@@ -20,6 +20,11 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user)
     return Response.json({ error: "Your session has expired." }, { status: 401 });
+  if (user.role === "PARENT")
+    return Response.json(
+      { error: "AI generation is not available in the parent workspace." },
+      { status: 403 },
+    );
 
   let body: unknown;
   try {

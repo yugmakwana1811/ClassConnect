@@ -47,7 +47,7 @@ export async function updateAccountAction(form: FormData) {
         where: { userId: user.id },
         data: { school: parsed.data.school, subject: parsed.data.subject },
       });
-    else
+    else if (user.role === "STUDENT")
       await tx.studentProfile.update({
         where: { userId: user.id },
         data: {
@@ -55,6 +55,11 @@ export async function updateAccountAction(form: FormData) {
           grade: parsed.data.grade,
           rollNumber: parsed.data.rollNumber,
         },
+      });
+    else
+      await tx.parentProfile.update({
+        where: { userId: user.id },
+        data: { school: parsed.data.school },
       });
     await tx.activityLog.create({
       data: { userId: user.id, action: "Updated profile", entityType: "User" },

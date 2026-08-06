@@ -4,7 +4,12 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { createSession, destroySession, requireUser } from "@/lib/auth";
+import {
+  createSession,
+  destroySession,
+  homeForRole,
+  requireUser,
+} from "@/lib/auth";
 import {
   aiSchema,
   announcementSchema,
@@ -108,7 +113,7 @@ export async function loginAction(form: FormData) {
       error instanceof Error ? error.message : "Unknown error",
     );
   }
-  redirect(user.role === "TEACHER" ? "/teacher" : "/student");
+  redirect(homeForRole(user.role));
 }
 
 export async function logoutAction() {
@@ -553,6 +558,8 @@ export async function closeAssignmentAction(form: FormData) {
 
 export async function generateContentAction(form: FormData) {
   const user = await requireUser();
+  if (user.role === "PARENT")
+    fail("/parent", "AI generation is available in teacher and student workspaces.");
   const parsed = aiSchema.safeParse({
     type: text(form, "type"),
     topic: text(form, "topic"),
@@ -601,6 +608,8 @@ export async function generateContentAction(form: FormData) {
 
 export async function saveGeneratedContentAction(form: FormData) {
   const user = await requireUser();
+  if (user.role === "PARENT")
+    fail("/parent", "AI generation is available in teacher and student workspaces.");
   const parsed = generatedContentSchema.safeParse({
     id: text(form, "id"),
     output: text(form, "output"),

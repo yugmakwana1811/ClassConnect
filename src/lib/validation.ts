@@ -38,7 +38,7 @@ export const registerSchema = z
     email: normalizedEmail,
     password: strongPassword,
     confirmPassword: z.string(),
-    role: z.enum(["TEACHER", "STUDENT"]),
+    role: z.enum(["TEACHER", "STUDENT", "PARENT"]),
     school: z.string().trim().max(120).optional(),
     subject: z.string().trim().max(80).optional(),
     grade: optionalGradeSchema,
@@ -62,6 +62,18 @@ export const accountSchema = z.object({
   subject: z.string().trim().max(80).optional(),
   grade: optionalGradeSchema,
   rollNumber: z.string().trim().max(30).optional(),
+});
+export const parentStudentLinkSchema = z.object({
+  studentEmail: normalizedEmail,
+  accessCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(
+      /^[A-HJ-NP-Z2-9]{10}$/,
+      "Enter the student's 10-character parent access code",
+    ),
+  relationship: z.string().trim().max(50).optional(),
 });
 export const emailChangeSchema = z
   .object({

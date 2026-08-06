@@ -9,6 +9,7 @@ import {
   emailChangeSchema,
   generatedContentSchema,
   joinClassSchema,
+  parentStudentLinkSchema,
   quizSchema,
   registerSchema,
   reviewSchema,
@@ -81,6 +82,37 @@ describe("EduGrade validation", () => {
         grade: "8",
       }).success,
     ).toBe(true);
+  });
+  it("allows a parent account without student-only grade details", () => {
+    expect(
+      registerSchema.safeParse({
+        name: "Kavita Mehta",
+        email: "parent@example.com",
+        password: "StrongPass!42",
+        confirmPassword: "StrongPass!42",
+        role: "PARENT",
+        grade: "",
+      }).success,
+    ).toBe(true);
+  });
+  it("normalizes secure parent connection details", () => {
+    expect(
+      parentStudentLinkSchema.parse({
+        studentEmail: " Student@Example.com ",
+        accessCode: " arjun2p4km ",
+        relationship: " Mother ",
+      }),
+    ).toEqual({
+      studentEmail: "student@example.com",
+      accessCode: "ARJUN2P4KM",
+      relationship: "Mother",
+    });
+    expect(
+      parentStudentLinkSchema.safeParse({
+        studentEmail: "student@example.com",
+        accessCode: "SHORT",
+      }).success,
+    ).toBe(false);
   });
   it("supports only CBSE Classes 6 through 12", () => {
     expect(

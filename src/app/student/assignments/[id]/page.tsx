@@ -278,7 +278,7 @@ export default async function StudentAssignment({
                 Preview every page before submitting. Your teacher will see the
                 pages in the order shown.
               </p>
-              <SubmissionUploadForm assignmentId={a.id} />
+              <SubmissionUploadForm assignmentId={a.id} userId={user.id} />
             </div>
           )}
         </section>

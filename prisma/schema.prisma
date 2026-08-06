@@ -83,6 +83,7 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([expiresAt])
 }
 
 model TeacherProfile {
@@ -159,6 +160,7 @@ model ClassEnrollment {
   student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([classId, studentId])
+  @@index([studentId])
 }
 
 model Assignment {
@@ -189,6 +191,8 @@ model AssignmentAttachment {
   mimeType     String
   size         Int
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
 }
 
 model Submission {
@@ -207,6 +211,7 @@ model Submission {
 
   @@unique([assignmentId, studentId])
   @@index([status])
+  @@index([studentId, status])
 }
 
 model SubmissionPage {
@@ -240,6 +245,8 @@ model Feedback {
   approved      Boolean    @default(false)
   createdAt     DateTime   @default(now())
   submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId, createdAt])
 }
 
 model Quiz {
@@ -253,6 +260,8 @@ model Quiz {
   class       ClassRoom      @relation(fields: [classId], references: [id], onDelete: Cascade)
   questions   QuizQuestion[]
   attempts    QuizAttempt[]
+
+  @@index([classId, published])
 }
 
 model QuizQuestion {
@@ -265,6 +274,8 @@ model QuizQuestion {
   marks         Int     @default(1)
   order         Int
   quiz          Quiz    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId, order])
 }
 
 model QuizAttempt {
@@ -276,6 +287,9 @@ model QuizAttempt {
   submittedAt DateTime       @default(now())
   quiz        Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
   student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([studentId, submittedAt])
 }
 
 model Resource {
@@ -289,6 +303,8 @@ model Resource {
   size        Int
   createdAt   DateTime  @default(now())
   class       ClassRoom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId, createdAt])
 }
 
 model Announcement {
@@ -300,6 +316,9 @@ model Announcement {
   publishedAt DateTime  @default(now())
   class       ClassRoom @relation(fields: [classId], references: [id], onDelete: Cascade)
   author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([classId, publishedAt])
+  @@index([authorId])
 }
 
 model AttendanceRecord {
@@ -313,6 +332,7 @@ model AttendanceRecord {
   student   StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([classId, studentId, date])
+  @@index([studentId, date])
 }
 
 model AIContentGeneration {
@@ -325,6 +345,8 @@ model AIContentGeneration {
   approved  Boolean       @default(false)
   createdAt DateTime      @default(now())
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model ActivityLog {

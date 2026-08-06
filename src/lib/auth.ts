@@ -4,18 +4,13 @@ import { createHmac, randomBytes } from "crypto";
 import { db } from "./db";
 import type { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { getAuthSecret } from "@/lib/runtime-config";
 
 const COOKIE_NAME = "edugrade_session";
 const SESSION_DAYS = 14;
 
-function sessionSecret() {
-  if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET)
-    throw new Error("AUTH_SECRET is required in production.");
-  return process.env.AUTH_SECRET ?? "development-only-change-me";
-}
-
 const hash = (token: string) =>
-  createHmac("sha256", sessionSecret()).update(token).digest("hex");
+  createHmac("sha256", getAuthSecret()).update(token).digest("hex");
 
 export async function createSession(userId: string) {
   const token = randomBytes(32).toString("base64url");

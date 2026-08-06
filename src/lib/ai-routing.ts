@@ -57,14 +57,3 @@ export function getAIModelCandidates(input: RoutingInput): AIModelConfig[] {
       : AI_MODELS.balanced;
   return [primary, secondary];
 }
-
-export function aiProviderLabel(provider: string): string {
-  if (provider === "deterministic-fallback") return "Safe fallback mode";
-  const modelId = provider.startsWith("openrouter:")
-    ? provider.slice("openrouter:".length)
-    : provider;
-  const match = Object.values(AI_MODELS).find((model) => model.id === modelId);
-  return match
-    ? `OpenRouter · ${match.label}`
-    : "OpenRouter · Subject-matched model";
-}

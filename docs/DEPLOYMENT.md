@@ -10,7 +10,7 @@ Copy `.env.example` to `.env.local` for local development. Never commit `.env.lo
 - `AUTH_SECRET`: at least 32 random bytes; signs session-token hashes and authentication throttle keys.
 - `BLOB_READ_WRITE_TOKEN`: private Vercel Blob token used for teaching resources and answer pages.
 - `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`: stable 32-byte base64 key shared by all production instances.
-- `OPENROUTER_API_KEY`: optional server-only OpenRouter credential. The app uses deterministic, teacher-safe fallback generation when absent. The backend always requests `nvidia/nemotron-3-ultra-550b-a55b:free`; there is no model-selection environment variable or client input.
+- `OPENROUTER_API_KEY`: optional server-only OpenRouter credential. The app uses deterministic, teaching-safe fallback generation when absent. Subject-aware model routing and failover use a server-controlled allowlist; there is no model-selection environment variable or client input.
 
 Generate application secrets locally with `openssl rand -base64 32`. Add values through `vercel env add` or the Vercel project settings; do not pass secret values on a command line that is recorded in shell history. Never commit an OpenRouter key or expose it with a `NEXT_PUBLIC_` prefix.
 
@@ -36,8 +36,8 @@ Before production promotion:
 
 - Run `npm run check` and `npm audit --omit=dev`.
 - Run `npx prisma migrate status` against the target database.
-- Confirm `/api/health` reports `database: connected`, `storage: configured`, and either `ai: configured` or the documented `ai: fallback` mode.
-- Exercise teacher registration, student registration, class enrollment, assignment upload/review, result publication, and quiz authoring/attempts.
+- Confirm `/api/health` reports `database: connected`, `auth: configured`, `storage: configured`, `serverActions: configured`, and either `ai: configured` or the documented `ai: fallback` mode.
+- Exercise teacher, student, and parent registration; class enrollment; parent linking; assignment upload/review; result publication; quizzes; and streamed AI output.
 - Inspect production error logs after the deployment.
 
 Rollback application code through Vercel deployment promotion. Database migrations require a reviewed forward-fix migration; never use destructive schema reset commands against production.

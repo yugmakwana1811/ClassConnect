@@ -28,7 +28,7 @@ export async function GET(
       where: { id, assignment: { class: classAccess } },
     });
     return file
-      ? storedFileResponse(request, file.url, file.name)
+      ? storedFileResponse(request, file.url, file.name, file.mimeType)
       : NextResponse.json({ error: "File not found" }, { status: 404 });
   }
   if (kind === "resource") {
@@ -36,7 +36,7 @@ export async function GET(
       where: { id, class: classAccess },
     });
     return file
-      ? storedFileResponse(request, file.url, file.title)
+      ? storedFileResponse(request, file.url, file.title, file.mimeType)
       : NextResponse.json({ error: "File not found" }, { status: 404 });
   }
   return NextResponse.json({ error: "Unknown file type" }, { status: 400 });

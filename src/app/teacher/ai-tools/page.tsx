@@ -211,12 +211,6 @@ export default async function AITools({
                   Review and refine
                 </h2>
               </div>
-              {output.provider === "deterministic-fallback" && (
-                <p className="hint" role="status">
-                  Live AI was unavailable, so EduGrade created an editable safe
-                  fallback.
-                </p>
-              )}
               <form action={saveGeneratedContentAction}>
                 <input type="hidden" name="id" value={output.id} />
                 <label>

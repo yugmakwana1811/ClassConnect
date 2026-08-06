@@ -30,5 +30,5 @@ export async function GET(
   });
   if (!page)
     return NextResponse.json({ error: "File not found" }, { status: 404 });
-  return storedFileResponse(request, page.url, page.name);
+  return storedFileResponse(request, page.url, page.name, page.mimeType);
 }

@@ -3,16 +3,11 @@ import "server-only";
 import { createHmac } from "crypto";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
+import { getAuthSecret } from "@/lib/runtime-config";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const BLOCK_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
-
-function secret() {
-  if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET)
-    throw new Error("AUTH_SECRET is required in production.");
-  return process.env.AUTH_SECRET ?? "development-only-change-me";
-}
 
 async function clientAddress() {
   const requestHeaders = await headers();
@@ -28,7 +23,7 @@ export async function authThrottleKey(
   identifier: string,
 ) {
   const address = await clientAddress();
-  return createHmac("sha256", secret())
+  return createHmac("sha256", getAuthSecret())
     .update(`${scope}:${identifier.toLowerCase()}:${address}`)
     .digest("hex");
 }

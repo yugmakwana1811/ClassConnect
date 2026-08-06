@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AI_MODELS, aiProviderLabel, selectAIModel } from "./ai-routing";
+import { AI_MODELS, selectAIModel } from "./ai-routing";
 
 describe("subject-aware AI routing", () => {
   it.each([
@@ -30,11 +30,5 @@ describe("subject-aware AI routing", () => {
         type: "ANNOUNCEMENT",
       }).id,
     ).toBe(AI_MODELS.language.id);
-  });
-
-  it("shows a transparent provider label", () => {
-    expect(aiProviderLabel(`openrouter:${AI_MODELS.reasoning.id}`)).toContain(
-      "Nemotron 3 Ultra",
-    );
   });
 });

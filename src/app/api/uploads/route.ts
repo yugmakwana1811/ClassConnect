@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MAX_ANSWER_PAGE_SIZE } from "@/lib/storage";
+import { submissionUploadPrefix } from "@/lib/submission-path";
 
 const payloadSchema = z.object({ assignmentId: z.string().min(1) });
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
           assignment.submissions[0].status !== "DRAFT"
         )
           throw new Error("Submission is already locked");
-        const expectedPrefix = `submissions/${assignment.id}/`;
+        const expectedPrefix = submissionUploadPrefix(assignment.id, user.id);
         if (!pathname.startsWith(expectedPrefix) || pathname.includes(".."))
           throw new Error("Invalid upload path");
         return {
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message : "Unknown upload error",
     );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload failed" },
+      { error: "The upload could not be authorized. Refresh and try again." },
       { status: 400 },
     );
   }

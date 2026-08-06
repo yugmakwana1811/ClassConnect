@@ -17,8 +17,10 @@ function eventLine(event: StreamEvent) {
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "TEACHER")
+  if (!user)
     return Response.json({ error: "Teacher access is required." }, { status: 401 });
+  if (user.role !== "TEACHER")
+    return Response.json({ error: "Teacher access is required." }, { status: 403 });
 
   let body: { submissionId?: unknown };
   try {
@@ -74,12 +76,13 @@ export async function POST(request: Request) {
         );
         controller.close();
       } catch (error) {
+        console.error(
+          "[EduGrade AI] Feedback stream failed",
+          error instanceof Error ? error.message : "Unknown feedback error",
+        );
         const streamError: StreamEvent = {
           type: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Unable to generate feedback. Please try again.",
+          message: "Unable to generate feedback. Please try again.",
         };
         controller.enqueue(encoder.encode(eventLine(streamError)));
         controller.close();

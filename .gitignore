@@ -36,6 +36,7 @@ yarn-error.log*
 
 # local upload fallback; production files live in private Vercel Blob storage
 /public/uploads/
+/.data/
 
 # vercel
 .vercel

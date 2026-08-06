@@ -100,12 +100,13 @@ export async function POST(request: Request) {
         );
         controller.close();
       } catch (error) {
+        console.error(
+          "[EduGrade AI] Generation stream failed",
+          error instanceof Error ? error.message : "Unknown generation error",
+        );
         const streamError: StreamEvent = {
           type: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Unable to generate content. Please try again.",
+          message: "Unable to generate content. Please try again.",
         };
         controller.enqueue(
           encoder.encode(eventLine(streamError)),

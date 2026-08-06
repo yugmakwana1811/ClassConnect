@@ -24,6 +24,32 @@ function promptField(prompt: Prisma.JsonValue, field: string) {
   return typeof value === "string" ? value : "";
 }
 
+function ActivityRows({
+  items,
+}: {
+  items: Array<{ id: string; action: string; createdAt: Date }>;
+}) {
+  return (
+    <div className="activity-list">
+      {items.map((activity) => (
+        <div className="activity-item" key={activity.id}>
+          <span className="activity-icon">
+            <CheckCircle2 size={15} />
+          </span>
+          <div>
+            <strong style={{ display: "block", fontSize: ".83rem" }}>
+              {activity.action}
+            </strong>
+            <small className="hint">
+              {formatDateTime(activity.createdAt)}
+            </small>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default async function ParentStudentProgressPage({
   params,
 }: {
@@ -205,6 +231,8 @@ export default async function ParentStudentProgressPage({
     (submission) =>
       submission.result?.teacherNote || submission.feedback.length > 0,
   );
+  const recentActivities = activities.slice(0, 3);
+  const earlierActivities = activities.slice(3);
 
   return (
     <div className="page">
@@ -561,7 +589,7 @@ export default async function ParentStudentProgressPage({
           )}
         </section>
 
-        <section className="card card-pad">
+        <section className="card card-pad" style={{ alignSelf: "start" }}>
           <div className="section-heading">
             <div>
               <div className="eyebrow">Recent learning activity</div>
@@ -570,19 +598,23 @@ export default async function ParentStudentProgressPage({
             <CalendarCheck color="var(--indigo)" />
           </div>
           {activities.length ? (
-            <div className="activity-list">
-              {activities.map((activity) => (
-                <div className="activity-item" key={activity.id}>
-                  <span className="activity-icon"><CheckCircle2 size={15} /></span>
-                  <div>
-                    <strong style={{ display: "block", fontSize: ".83rem" }}>
-                      {activity.action}
-                    </strong>
-                    <small className="hint">{formatDateTime(activity.createdAt)}</small>
+            <>
+              <ActivityRows items={recentActivities} />
+              {earlierActivities.length ? (
+                <details className="parent-activity-more">
+                  <summary>
+                    View {earlierActivities.length} earlier{" "}
+                    {earlierActivities.length === 1 ? "activity" : "activities"}
+                  </summary>
+                  <div
+                    className="parent-activity-scroll"
+                    aria-label="Earlier learning activity"
+                  >
+                    <ActivityRows items={earlierActivities} />
                   </div>
-                </div>
-              ))}
-            </div>
+                </details>
+              ) : null}
+            </>
           ) : (
             <p className="hint">No learning activity is recorded yet.</p>
           )}

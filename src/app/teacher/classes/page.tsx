@@ -1,22 +1,44 @@
 import Link from "next/link";
-import { ArrowRight, Plus, Users } from "lucide-react";
+import {
+  ArrowRight,
+  FilePlus2,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Alert, EmptyState, PageHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
-import { createClassAction } from "@/app/actions";
+import {
+  createClassAction,
+  deleteClassAction,
+  renameClassAction,
+} from "@/app/actions";
 import { GradeSubjectFields } from "@/components/education-selects";
 
 export default async function TeacherClasses({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, success } = await searchParams;
   const user = await requireUser("TEACHER");
   const classes = await db.classRoom.findMany({
     where: { teacherId: user.teacherProfile!.id },
-    include: { _count: { select: { enrollments: true, assignments: true } } },
+    include: {
+      _count: {
+        select: {
+          enrollments: true,
+          assignments: true,
+          quizzes: true,
+          resources: true,
+          announcements: true,
+          attendance: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
   return (
@@ -26,7 +48,7 @@ export default async function TeacherClasses({
         title="Classes and cohorts"
         description="Create teaching spaces, share class codes, and see each cohort at a glance."
       />
-      <Alert error={error} />
+      <Alert error={error} success={success} />
       <div
         style={{
           display: "grid",
@@ -38,65 +60,141 @@ export default async function TeacherClasses({
         <section>
           {classes.length ? (
             <div className="grid-auto">
-              {classes.map((c) => (
-                <Link
-                  href={`/teacher/classes/${c.id}`}
-                  className="card card-pad"
-                  key={c.id}
-                  style={{ display: "block" }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: ".6rem",
-                    }}
-                  >
-                    <span className="badge badge-teal">Class {c.grade}</span>
-                    <ArrowRight size={18} color="var(--muted)" />
-                  </div>
-                  <h2
-                    className="display"
-                    style={{ fontSize: "1.65rem", margin: ".8rem 0 .2rem" }}
-                  >
-                    {c.name}
-                  </h2>
-                  <p style={{ color: "var(--muted)", margin: 0 }}>
-                    {c.subject}
-                  </p>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "1rem",
-                      marginTop: "1rem",
-                      fontSize: ".8rem",
-                    }}
-                  >
-                    <span>
-                      <Users
-                        size={14}
-                        style={{ display: "inline", verticalAlign: "middle" }}
-                      />{" "}
-                      {c._count.enrollments} students
-                    </span>
-                    <span>{c._count.assignments} assignments</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginTop: "1rem",
-                      background: "var(--surface-subtle)",
-                      padding: ".65rem",
-                      borderRadius: 9,
-                    }}
-                  >
-                    <span className="hint">Class code</span>
-                    <strong style={{ letterSpacing: ".14em" }}>{c.code}</strong>
-                  </div>
-                </Link>
-              ))}
+              {classes.map((c) => {
+                const relatedRecords =
+                  c._count.enrollments +
+                  c._count.assignments +
+                  c._count.quizzes +
+                  c._count.resources +
+                  c._count.announcements +
+                  c._count.attendance;
+                return (
+                  <article className="card class-card" key={c.id}>
+                    <div className="class-card-topbar">
+                      <span className="badge badge-teal">Class {c.grade}</span>
+                      <details className="class-card-options class-card-delete-options class-card-delete-top">
+                        <summary className="btn btn-danger">
+                          <Trash2 size={15} /> Delete class
+                        </summary>
+                        <div className="class-card-options-panel">
+                          <form
+                            action={deleteClassAction}
+                            className="class-card-delete"
+                          >
+                            <input type="hidden" name="id" value={c.id} />
+                            <label>
+                              <span className="label">
+                                Type <strong>{c.name}</strong> to delete
+                              </span>
+                              <input
+                                className="field"
+                                name="confirmName"
+                                autoComplete="off"
+                                required
+                              />
+                            </label>
+                            <p className="hint">
+                              Permanently removes this class and{" "}
+                              {relatedRecords
+                                ? `${relatedRecords} linked classroom record${relatedRecords === 1 ? "" : "s"}`
+                                : "its class code"}
+                              , including all enrolled students. This cannot be
+                              undone.
+                            </p>
+                            <SubmitButton
+                              className="btn btn-danger"
+                              pendingText="Deleting class…"
+                              confirmMessage={`Permanently delete “${c.name}” and all of its student, assessment, resource, announcement, and attendance data? This cannot be undone.`}
+                            >
+                              <Trash2 size={15} /> Permanently delete class
+                            </SubmitButton>
+                          </form>
+                        </div>
+                      </details>
+                    </div>
+                    <Link
+                      href={`/teacher/classes/${c.id}`}
+                      className="class-card-main"
+                    >
+                      <div className="class-card-open-cue">
+                        <span className="hint">Open class</span>
+                        <ArrowRight size={18} color="var(--muted)" />
+                      </div>
+                      <h2
+                        className="display"
+                        style={{ fontSize: "1.65rem", margin: ".5rem 0 .2rem" }}
+                      >
+                        {c.name}
+                      </h2>
+                      <p style={{ color: "var(--muted)", margin: 0 }}>
+                        {c.subject}
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "1rem",
+                          marginTop: "1rem",
+                          fontSize: ".8rem",
+                        }}
+                      >
+                        <span>
+                          <Users
+                            size={14}
+                            style={{ display: "inline", verticalAlign: "middle" }}
+                          />{" "}
+                          {c._count.enrollments} students
+                        </span>
+                        <span>{c._count.assignments} assignments</span>
+                      </div>
+                      <div className="class-card-code">
+                        <span className="hint">Class code</span>
+                        <strong>{c.code}</strong>
+                      </div>
+                    </Link>
+                    <div className="class-card-actions">
+                      <Link
+                        href={`/teacher/classes/${c.id}`}
+                        className="btn btn-secondary"
+                      >
+                        <ArrowRight size={15} /> Open
+                      </Link>
+                      <Link
+                        href={`/teacher/assignments/new?classId=${c.id}`}
+                        className="btn btn-secondary"
+                      >
+                        <FilePlus2 size={15} /> New assignment
+                      </Link>
+                      <details className="class-card-options">
+                        <summary className="btn btn-secondary">
+                          <Pencil size={15} /> Rename class
+                        </summary>
+                        <div className="class-card-options-panel">
+                          <form
+                            action={renameClassAction}
+                            className="class-card-rename"
+                          >
+                            <input type="hidden" name="id" value={c.id} />
+                            <label>
+                              <span className="label">Rename class</span>
+                              <input
+                                className="field"
+                                name="name"
+                                defaultValue={c.name}
+                                minLength={3}
+                                maxLength={80}
+                                required
+                              />
+                            </label>
+                            <SubmitButton pendingText="Renaming…">
+                              <Pencil size={15} /> Rename
+                            </SubmitButton>
+                          </form>
+                        </div>
+                      </details>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <EmptyState

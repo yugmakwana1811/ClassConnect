@@ -8,6 +8,7 @@ import {
 import { Logo } from "@/components/logo";
 import { Alert } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
+import { PasswordField } from "@/components/password-field";
 import { loginAction } from "@/app/actions";
 
 export default async function Login({
@@ -43,17 +44,13 @@ export default async function Login({
                 required
               />
             </label>
-            <label>
-              <span className="label">Password</span>
-              <input
-                className="field"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                minLength={8}
-                required
-              />
-            </label>
+            <PasswordField
+              label="Password"
+              name="password"
+              autoComplete="current-password"
+              minLength={8}
+              required
+            />
             <SubmitButton pendingText="Opening workspace…">
               Sign in securely
             </SubmitButton>

@@ -3,11 +3,11 @@
 ## Implemented
 
 - Self-service teacher and student registration with strong password policy, hashed credentials, persistent database sessions, HTTP-only cookies, role-protected routes, login throttling, profile editing, password changes, and other-session invalidation.
-- Teacher class creation and editing, secure six-character enrollment codes, code rotation, student enrollment, roster viewing, and teacher-controlled removal.
+- Teacher class creation, list-level opening, assignment shortcuts, renaming, permanent deletion with exact-name confirmation and uploaded-file cleanup, secure six-character enrollment codes, code rotation, student enrollment, roster viewing, and teacher-controlled removal.
 - Assignment draft creation and editing, optional private attachments, publishing, closing submissions, deadline validation in the India classroom timezone, and persistent status tracking.
 - Private multi-image handwritten answer uploads with type/size validation, ordered previews, removal before final submission, metadata persistence, and protected teacher/student file routes.
-- Teacher review queues, answer-page viewing, editable AI feedback suggestions, mark validation, draft review state, teacher-controlled result publication, and student result history.
-- Teacher-authored quizzes with 1–20 validated multiple-choice questions, unique options, explanations, draft/publish/delete lifecycle, student attempts, deterministic scoring, retry support, and attempt analytics.
+- Teacher review queues for real test, assignment, and worksheet files; protected question-paper and answer-page viewing; auto-graded quiz-attempt evidence; editable AI feedback suggestions; mark validation; draft review state; teacher-controlled result publication; and student result history.
+- Teacher-authored quizzes with 1–20 validated multiple-choice questions, unique options, explanations, draft/publish/delete lifecycle, student attempts, deterministic scoring, retry support, attempt analytics, and test-only fullscreen lockdown that blocks in-app navigation and common window/tab actions while pausing on focus, visibility, or fullscreen loss.
 - AI lesson plans, explanations, notes, questions, quiz drafts, revision sheets, announcements, feedback suggestions, student doubt help, and revision support through a replaceable server-only service abstraction.
 - Private resource uploads, resource deletion, announcements and deletion, attendance records, activity logs, loading states, error boundaries, empty states, confirmation dialogs, and responsive teacher/student navigation.
 - Teacher and student dashboards and analytics calculated from persistent assignments, results, attendance, quizzes, and activity data. Topic insights show evidence counts and remain advisory.

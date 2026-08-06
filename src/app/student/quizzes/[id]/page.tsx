@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
-import { submitQuizAction } from "@/app/actions";
+import { TestLockdownForm } from "@/components/test-lockdown-form";
 export default async function QuizDetail({
   params,
   searchParams,
@@ -39,10 +38,10 @@ export default async function QuizDetail({
   const answers = (result?.answers ?? {}) as Record<string, string>;
   const total = q.questions.reduce((n, x) => n + x.marks, 0);
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
+    <div className="page test-page" style={{ maxWidth: 900 }}>
       <Link
         href="/student/quizzes"
-        className="hint"
+        className="hint test-page-exit"
         style={{
           display: "inline-flex",
           gap: 5,
@@ -121,49 +120,18 @@ export default async function QuizDetail({
           </Link>
         </div>
       ) : (
-        <form action={submitQuizAction}>
-          <input type="hidden" name="quizId" value={q.id} />
-          {q.questions.map((question, i) => (
-            <fieldset
-              className="card card-pad"
-              key={question.id}
-              style={{ margin: "0 0 .8rem", border: "1px solid var(--line)" }}
-            >
-              <legend style={{ fontWeight: 850, padding: "0 .4rem" }}>
-                {i + 1}. {question.prompt}
-              </legend>
-              <div
-                style={{ display: "grid", gap: ".55rem", marginTop: ".7rem" }}
-              >
-                {(question.options as string[]).map((option) => (
-                  <label
-                    key={option}
-                    style={{
-                      display: "flex",
-                      gap: ".6rem",
-                      alignItems: "center",
-                      padding: ".75rem",
-                      border: "1px solid var(--line)",
-                      borderRadius: 9,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name={`answer-${question.id}`}
-                      value={option}
-                      required
-                    />
-                    <span>{option}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          ))}
-          <SubmitButton pendingText="Checking answers…">
-            Submit quiz answers
-          </SubmitButton>
-        </form>
+        <TestLockdownForm
+          quizId={q.id}
+          questions={q.questions.map((question) => ({
+            id: question.id,
+            prompt: question.prompt,
+            options: Array.isArray(question.options)
+              ? question.options.filter(
+                  (option): option is string => typeof option === "string",
+                )
+              : [],
+          }))}
+        />
       )}
     </div>
   );

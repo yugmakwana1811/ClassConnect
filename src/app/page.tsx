@@ -23,6 +23,8 @@ import { HoverExpand } from "@/components/hover-expand";
 import { Logo } from "@/components/logo";
 import { MotionAccordion } from "@/components/motion-accordion";
 import { MotionNavigationMenu } from "@/components/motion-navigation-menu";
+import TextMorph from "@/components/text-morph";
+import ShinyText from "@/components/ShinyText";
 
 const cycle = [
   "Plan",
@@ -132,7 +134,14 @@ export default function Home() {
             data-cinematic-reveal
           >
             <div className="hero-kicker">
-              <Sparkles size={14} /> Classroom intelligence · Classes 6–12
+              <Sparkles size={14} />
+              <ShinyText
+                text="Classroom intelligence · Classes 6–12"
+                speed={3.2}
+                color="#334155"
+                shineColor="#6b6de6"
+                spread={105}
+              />
             </div>
             <h1
               className="display hero-title cinematic-hero-title"
@@ -308,6 +317,23 @@ export default function Home() {
           <span>One continuous classroom record</span>
           <strong>From first idea to next learning action.</strong>
         </div>
+        <TextMorph
+          className="cinematic-cycle-morph"
+          words={cycle}
+          transition={{ duration: 0.8, delay: 0.9, ease: "circInOut" }}
+          color="var(--indigo)"
+          font={{
+            fontFamily:
+              '"Inter", "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif',
+            fontWeight: 700,
+            fontSize: "clamp(3rem, 8vw, 7.5rem)",
+            lineHeight: "1em",
+            letterSpacing: "-0.055em",
+            textAlign: "center",
+          }}
+          ariaLabel="The connected teaching cycle: plan, teach, assign, collect, evaluate, support, communicate, and analyse"
+          dataDepth="2"
+        />
         <div className="cycle-rail cinematic-cycle-rail" data-depth="3">
           {cycle.map((item, index) => (
             <div className="cycle-step" key={item}>

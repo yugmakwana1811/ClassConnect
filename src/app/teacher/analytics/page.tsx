@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   AlertTriangle,
   BarChart3,
@@ -69,15 +70,18 @@ export default async function TeacherAnalytics() {
     ? Math.round((present / attendance.length) * 100)
     : 0;
   const studentsNeedingAttention = [
-    ...new Set(
+    ...new Map(
       scored
         .filter(
           (submission) =>
             Number(submission.result!.marks) / submission.assignment.maxMarks <
             0.6,
         )
-        .map((submission) => submission.student.user.name),
-    ),
+        .map((submission) => [
+          submission.student.id,
+          { id: submission.student.id, name: submission.student.user.name },
+        ]),
+    ).values(),
   ];
   const topics = topicPerformance(
     scored.map((submission) => ({
@@ -240,9 +244,9 @@ export default async function TeacherAnalytics() {
             Students to check in with
           </h2>
           {studentsNeedingAttention.length ? (
-            studentsNeedingAttention.map((name) => (
+            studentsNeedingAttention.map((student) => (
               <div
-                key={name}
+                key={student.id}
                 style={{
                   display: "flex",
                   gap: ".7rem",
@@ -255,7 +259,12 @@ export default async function TeacherAnalytics() {
               >
                 <AlertTriangle size={18} color="var(--coral)" />
                 <div>
-                  <strong>{name}</strong>
+                  <Link
+                    href={`/teacher/students/${student.id}`}
+                    style={{ fontWeight: 850 }}
+                  >
+                    {student.name}
+                  </Link>
                   <div className="hint">
                     A published score is below 60%; review the work and
                     classroom context.

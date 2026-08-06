@@ -90,11 +90,16 @@ export const passwordChangeSchema = z
     message: "Choose a password different from your current password",
     path: ["newPassword"],
   });
+export const classNameSchema = z
+  .string()
+  .trim()
+  .min(3, "Class name must contain at least 3 characters")
+  .max(80, "Class name must contain no more than 80 characters");
 export const classSchema = z.object({
-  name: z.string().min(3).max(80),
-  subject: z.string().min(2).max(80),
+  name: classNameSchema,
+  subject: z.string().trim().min(2).max(80),
   grade: requiredGradeSchema,
-  description: z.string().max(300).optional(),
+  description: z.string().trim().max(300).optional(),
 });
 export const joinClassSchema = z.object({
   code: z

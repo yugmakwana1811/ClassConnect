@@ -11,6 +11,7 @@ import {
   assignmentSchema,
   attendanceDateSchema,
   attendanceStatusSchema,
+  classNameSchema,
   classSchema,
   generatedContentSchema,
   joinClassSchema,
@@ -174,6 +175,111 @@ export async function updateClassAction(form: FormData) {
     }),
   ]);
   redirect(`/teacher/classes/${id}?success=Class updated`);
+}
+
+export async function renameClassAction(form: FormData) {
+  const user = await requireUser("TEACHER");
+  const id = text(form, "id");
+  const parsed = classNameSchema.safeParse(text(form, "name"));
+  if (!parsed.success)
+    fail(
+      "/teacher/classes",
+      parsed.error.issues[0]?.message ?? "Check the class name.",
+    );
+  const classroom = await db.classRoom.findFirst({
+    where: { id, teacherId: user.teacherProfile!.id },
+    select: { id: true },
+  });
+  if (!classroom) fail("/teacher/classes", "Class not found.");
+  await db.$transaction([
+    db.classRoom.update({ where: { id }, data: { name: parsed.data } }),
+    db.activityLog.create({
+      data: {
+        userId: user.id,
+        action: "Renamed class",
+        entityType: "ClassRoom",
+        entityId: id,
+      },
+    }),
+  ]);
+  redirect("/teacher/classes?success=Class renamed");
+}
+
+export async function deleteClassAction(form: FormData) {
+  const user = await requireUser("TEACHER");
+  const id = text(form, "id");
+  const confirmation = text(form, "confirmName").trim();
+  const classroom = await db.classRoom.findFirst({
+    where: { id, teacherId: user.teacherProfile!.id },
+    select: {
+      id: true,
+      name: true,
+      resources: { select: { url: true } },
+      assignments: {
+        select: {
+          attachments: { select: { url: true } },
+          submissions: {
+            select: { pages: { select: { url: true } } },
+          },
+        },
+      },
+      _count: {
+        select: {
+          enrollments: true,
+          assignments: true,
+          quizzes: true,
+          resources: true,
+          announcements: true,
+          attendance: true,
+        },
+      },
+    },
+  });
+  if (!classroom) fail("/teacher/classes", "Class not found.");
+  if (confirmation !== classroom.name.trim())
+    fail(
+      "/teacher/classes",
+      `Type “${classroom.name.trim()}” exactly to delete this class.`,
+    );
+
+  const storedFiles = new Set([
+    ...classroom.resources.map((resource) => resource.url),
+    ...classroom.assignments.flatMap((assignment) => [
+      ...assignment.attachments.map((attachment) => attachment.url),
+      ...assignment.submissions.flatMap((submission) =>
+        submission.pages.map((page) => page.url),
+      ),
+    ]),
+  ]);
+
+  await db.$transaction([
+    db.classRoom.delete({ where: { id: classroom.id } }),
+    db.activityLog.create({
+      data: {
+        userId: user.id,
+        action: "Deleted class",
+        entityType: "ClassRoom",
+        entityId: classroom.id,
+        metadata: {
+          className: classroom.name,
+          ...classroom._count,
+        },
+      },
+    }),
+  ]);
+
+  const cleanup = await Promise.allSettled(
+    [...storedFiles].map((url) => deleteStoredFile(url)),
+  );
+  const failedCleanup = cleanup.filter(
+    (result) => result.status === "rejected",
+  );
+  if (failedCleanup.length)
+    console.error(
+      `[EduGrade] ${failedCleanup.length} stored class file(s) could not be removed after deleting class ${classroom.id}.`,
+    );
+
+  redirect("/teacher/classes?success=Class permanently deleted");
 }
 
 export async function regenerateClassCodeAction(form: FormData) {
@@ -910,6 +1016,10 @@ export async function markAttendanceAction(form: FormData) {
 export async function submitQuizAction(form: FormData) {
   const user = await requireUser("STUDENT");
   const quizId = text(form, "quizId");
+  const lockdownViolations = Math.min(
+    100,
+    Math.max(0, Number.parseInt(text(form, "lockdownViolations"), 10) || 0),
+  );
   const quiz = await db.quiz.findFirst({
     where: {
       id: quizId,
@@ -954,7 +1064,7 @@ export async function submitQuizAction(form: FormData) {
       action: "Completed quiz",
       entityType: "QuizAttempt",
       entityId: attempt.id,
-      metadata: { score, max },
+      metadata: { score, max, lockdownViolations },
     },
   });
   redirect(`/student/quizzes/${quiz.id}?attempt=${attempt.id}`);

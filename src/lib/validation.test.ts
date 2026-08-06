@@ -4,6 +4,7 @@ import {
   aiSchema,
   attendanceDateSchema,
   attendanceStatusSchema,
+  classNameSchema,
   classSchema,
   emailChangeSchema,
   generatedContentSchema,
@@ -111,6 +112,12 @@ describe("EduGrade validation", () => {
         grade: "13",
       }).success,
     ).toBe(false);
+  });
+  it("normalizes class names and rejects blank-looking names", () => {
+    expect(classNameSchema.parse("  Class 11 Commerce  ")).toBe(
+      "Class 11 Commerce",
+    );
+    expect(classNameSchema.safeParse("   ").success).toBe(false);
   });
   it("normalizes matching email changes", () => {
     const parsed = emailChangeSchema.parse({

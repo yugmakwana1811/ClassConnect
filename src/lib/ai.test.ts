@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { generateAI } from "./ai";
+import { createAIStream, generateAI } from "./ai";
 import { AI_MODELS } from "./ai-routing";
 
 describe("AI service", () => {
@@ -35,6 +35,48 @@ describe("AI service", () => {
     expect(result.content).toContain("without giving away assessed work");
     expect(result.content).toContain("Learning safety");
     expect(result.content).not.toContain("Teacher review");
+  });
+
+  it("streams deterministic fallback content in incremental chunks", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    const result = await createAIStream({
+      type: "EXPLANATION",
+      topic: "Photosynthesis",
+      subject: "Biology",
+      grade: "8",
+    });
+    const chunks: string[] = [];
+    for await (const chunk of result.chunks) chunks.push(chunk);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.join("")).toContain("Photosynthesis");
+    expect(await result.provider).toBe("deterministic-fallback");
+  });
+
+  it("parses OpenRouter server-sent events into text chunks", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "test-key-not-a-real-secret");
+    const first = JSON.stringify({ choices: [{ delta: { content: "First " } }] });
+    const second = JSON.stringify({ choices: [{ delta: { content: "chunk" } }] });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(`data: ${first}\n\ndata: ${second}\n\ndata: [DONE]\n\n`, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" },
+      }),
+    );
+
+    const result = await createAIStream({
+      type: "NOTES",
+      topic: "Linear equations",
+      subject: "Mathematics",
+      grade: "8",
+    });
+    const chunks: string[] = [];
+    for await (const chunk of result.chunks) chunks.push(chunk);
+
+    expect(chunks).toEqual(["First ", "chunk"]);
+    expect(await result.provider).toBe(`openrouter:${AI_MODELS.reasoning.id}`);
+    const requestBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(requestBody.stream).toBe(true);
   });
 
   it("routes STEM work to the server-owned reasoning model", async () => {

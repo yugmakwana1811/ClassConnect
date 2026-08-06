@@ -64,10 +64,7 @@ export async function generateAI(
   if (!apiKey)
     return { content: fallback(input), provider: "deterministic-fallback" };
 
-  const systemPrompt =
-    input.audience === "student"
-      ? `You are an Indian CBSE ${input.subject} learning assistant for Class ${input.grade}. Provide age-appropriate hints, explanations, and revision support without completing assessed work. Check calculations and curriculum claims carefully, state uncertainty, encourage original working, and recommend teacher verification when needed. Never request or infer personal student information.`
-      : `You are an Indian CBSE ${input.subject} teaching assistant for Class ${input.grade}. Produce accurate, age-appropriate, editable suggestions. Check calculations and curriculum claims carefully. Never make final grading decisions. Never request or infer personal student information. End with a teacher-verification reminder.`;
+  const systemPrompt = buildSystemPrompt(input);
 
   for (const model of getAIModelCandidates(input)) {
     try {
@@ -89,6 +86,89 @@ export async function generateAI(
     "[EduGrade AI] All permitted OpenRouter models failed; using safe fallback.",
   );
   return { content: fallback(input), provider: "deterministic-fallback" };
+}
+
+export type AIStream = {
+  chunks: AsyncGenerator<string>;
+  provider: Promise<string>;
+};
+
+/**
+ * Creates a streaming generation while preserving the same server-owned
+ * routing and deterministic fallback behavior as generateAI(). A provider is
+ * resolved only after all chunks have been delivered so callers can persist a
+ * complete generation without exposing provider metadata to the browser.
+ */
+export async function createAIStream(input: GenerateInput): Promise<AIStream> {
+  let resolveProvider!: (provider: string) => void;
+  const provider = new Promise<string>((resolve) => {
+    resolveProvider = resolve;
+  });
+
+  const chunks = (async function* () {
+    const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+    if (!apiKey) {
+      for (const chunk of chunkText(fallback(input))) {
+        yield chunk;
+        await waitForNextChunk();
+      }
+      resolveProvider("deterministic-fallback");
+      return;
+    }
+
+    const systemPrompt = buildSystemPrompt(input);
+    for (const model of getAIModelCandidates(input)) {
+      let emitted = false;
+      try {
+        for await (const chunk of requestOpenRouterStream(
+          apiKey,
+          model,
+          systemPrompt,
+          input,
+        )) {
+          emitted = true;
+          yield chunk;
+        }
+        resolveProvider(`openrouter:${model.id}`);
+        return;
+      } catch (error) {
+        console.warn(
+          `[EduGrade AI] Streaming OpenRouter model ${model.id} failed:`,
+          error instanceof Error ? error.message : "Unknown provider error",
+        );
+        // Once content has reached the user, silently switching models would
+        // produce a mixed answer. Surface the error instead of corrupting it.
+        if (emitted) throw error;
+        if (error instanceof OpenRouterError && error.stopFailover) break;
+      }
+    }
+
+    console.error(
+      "[EduGrade AI] All permitted streaming models failed; using safe fallback.",
+    );
+    for (const chunk of chunkText(fallback(input))) {
+      yield chunk;
+      await waitForNextChunk();
+    }
+    resolveProvider("deterministic-fallback");
+  })();
+
+  return { chunks, provider };
+}
+
+function buildSystemPrompt(input: GenerateInput) {
+  return input.audience === "student"
+    ? `You are an Indian CBSE ${input.subject} learning assistant for Class ${input.grade}. Provide age-appropriate hints, explanations, and revision support without completing assessed work. Check calculations and curriculum claims carefully, state uncertainty, encourage original working, and recommend teacher verification when needed. Never request or infer personal student information.`
+    : `You are an Indian CBSE ${input.subject} teaching assistant for Class ${input.grade}. Produce accurate, age-appropriate, editable suggestions. Check calculations and curriculum claims carefully. Never make final grading decisions. Never request or infer personal student information. End with a teacher-verification reminder.`;
+}
+
+function* chunkText(content: string, size = 96) {
+  for (let index = 0; index < content.length; index += size)
+    yield content.slice(index, index + size);
+}
+
+function waitForNextChunk() {
+  return new Promise<void>((resolve) => setTimeout(resolve, 12));
 }
 
 class OpenRouterError extends Error {
@@ -147,6 +227,83 @@ async function requestOpenRouter(
   return content;
 }
 
+async function* requestOpenRouterStream(
+  apiKey: string,
+  model: AIModelConfig,
+  systemPrompt: string,
+  input: GenerateInput,
+) {
+  const response = await fetch(OPENROUTER_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "X-OpenRouter-Title": "EduGrade AI",
+    },
+    body: JSON.stringify({
+      model: model.id,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: JSON.stringify(input) },
+      ],
+      max_tokens: model.maxTokens,
+      ...(model.reasoning ? { reasoning: model.reasoning } : {}),
+      temperature: model.temperature,
+      stream: true,
+    }),
+    signal: AbortSignal.timeout(240_000),
+  });
+
+  if (!response.ok) {
+    const stopFailover = [401, 402, 403].includes(response.status);
+    throw new OpenRouterError(
+      `OpenRouter streaming request failed (${response.status})`,
+      stopFailover,
+    );
+  }
+  if (!response.body)
+    throw new OpenRouterError("OpenRouter streaming response had no body");
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let emitted = false;
+  let finished = false;
+
+  while (!finished) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      const payload = line.startsWith("data:")
+        ? line.slice("data:".length).trim()
+        : "";
+      if (!payload) continue;
+      if (payload === "[DONE]") {
+        finished = true;
+        break;
+      }
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(payload);
+      } catch {
+        continue;
+      }
+      const content = readStreamContent(parsed);
+      if (!content) continue;
+      emitted = true;
+      yield content;
+    }
+
+    if (done) break;
+  }
+
+  if (!emitted)
+    throw new OpenRouterError("OpenRouter returned no streamed content");
+}
+
 function readContent(data: unknown): string | null {
   if (!data || typeof data !== "object") return null;
   const choices = (data as { choices?: unknown }).choices;
@@ -157,4 +314,26 @@ function readContent(data: unknown): string | null {
   if (!message || typeof message !== "object") return null;
   const content = (message as { content?: unknown }).content;
   return typeof content === "string" && content.trim() ? content.trim() : null;
+}
+
+function readStreamContent(data: unknown): string | null {
+  if (!data || typeof data !== "object") return null;
+  const choices = (data as { choices?: unknown }).choices;
+  if (!Array.isArray(choices)) return null;
+  const first = choices[0];
+  if (!first || typeof first !== "object") return null;
+  const delta = (first as { delta?: unknown }).delta;
+  if (!delta || typeof delta !== "object") return null;
+  const content = (delta as { content?: unknown }).content;
+  if (typeof content === "string" && content.length > 0) return content;
+  if (!Array.isArray(content)) return null;
+  const text = content
+    .map((part) =>
+      part && typeof part === "object" && "text" in part
+        ? (part as { text?: unknown }).text
+        : null,
+    )
+    .filter((part): part is string => typeof part === "string")
+    .join("");
+  return text || null;
 }

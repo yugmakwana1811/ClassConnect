@@ -1,0 +1,14 @@
+.shiny-text {
+  display: inline-block;
+}
+
+.cinematic-no-motion .shiny-text,
+.cinematic-lite .shiny-text {
+  background-position: 150% center !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shiny-text {
+    background-position: 150% center !important;
+  }
+}

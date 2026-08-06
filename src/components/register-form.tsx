@@ -5,6 +5,7 @@ import { GraduationCap, UserRound } from "lucide-react";
 import { registerAction } from "@/app/auth-actions";
 import { SubmitButton } from "@/components/submit-button";
 import { GradeSelect } from "@/components/education-selects";
+import { PasswordField } from "@/components/password-field";
 
 export function RegisterForm() {
   const [role, setRole] = useState<"TEACHER" | "STUDENT">("TEACHER");
@@ -121,35 +122,25 @@ export function RegisterForm() {
           </label>
         </div>
       )}
-      <label>
-        <span className="label">Password</span>
-        <input
-          className="field"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={10}
-          maxLength={128}
-          pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{10,}"
-          title="Use 10+ characters with uppercase, lowercase, number, and special character"
-          required
-        />
-        <span className="hint">
-          10+ characters with uppercase, lowercase, number, and symbol.
-        </span>
-      </label>
-      <label>
-        <span className="label">Confirm password</span>
-        <input
-          className="field"
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          minLength={10}
-          maxLength={128}
-          required
-        />
-      </label>
+      <PasswordField
+        label="Password"
+        name="password"
+        autoComplete="new-password"
+        minLength={10}
+        maxLength={128}
+        pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{10,}"
+        title="Use 10+ characters with uppercase, lowercase, number, and special character"
+        hint="10+ characters with uppercase, lowercase, number, and symbol."
+        required
+      />
+      <PasswordField
+        label="Confirm password"
+        name="confirmPassword"
+        autoComplete="new-password"
+        minLength={10}
+        maxLength={128}
+        required
+      />
       <SubmitButton pendingText="Creating secure account…">
         Create my account
       </SubmitButton>

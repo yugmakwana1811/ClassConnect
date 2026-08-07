@@ -1,3 +1,4 @@
+import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 import {
   buildDemoSubmissions,
@@ -7,6 +8,8 @@ import {
   DEMO_RESOURCES,
   DEMO_STUDENTS,
 } from "../src/lib/demo-catalog";
+
+loadEnvConfig(process.cwd());
 
 const db = new PrismaClient();
 

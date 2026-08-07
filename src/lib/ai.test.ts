@@ -77,6 +77,11 @@ describe("AI service", () => {
     expect(await result.provider).toBe(`openrouter:${AI_MODELS.reasoning.id}`);
     const requestBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     expect(requestBody.stream).toBe(true);
+    expect(requestBody.model).toBe(AI_MODELS.reasoning.id);
+    expect(requestBody.provider).toEqual({
+      sort: "throughput",
+      require_parameters: true,
+    });
   });
 
   it("routes STEM work to the server-owned reasoning model", async () => {
@@ -106,7 +111,11 @@ describe("AI service", () => {
     expect(body.model).toBe(AI_MODELS.reasoning.id);
     expect(body.model).not.toBe("attacker/attempted-override");
     expect(body.max_tokens).toBe(4_096);
-    expect(body.reasoning).toEqual({ max_tokens: 1_024, exclude: true });
+    expect(body.reasoning).toEqual({ effort: "medium", exclude: true });
+    expect(body.provider).toEqual({
+      sort: "throughput",
+      require_parameters: true,
+    });
     expect(result.provider).toBe(`openrouter:${AI_MODELS.reasoning.id}`);
   });
 
@@ -137,8 +146,8 @@ describe("AI service", () => {
     const firstBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     const secondBody = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
     expect(firstBody.model).toBe(AI_MODELS.language.id);
-    expect(secondBody.model).toBe(AI_MODELS.balanced.id);
-    expect(result.provider).toBe(`openrouter:${AI_MODELS.balanced.id}`);
+    expect(secondBody.model).toBe(AI_MODELS.fallback.id);
+    expect(result.provider).toBe(`openrouter:${AI_MODELS.fallback.id}`);
   });
 
   it("uses a permitted failover when the primary model is rate limited", async () => {
@@ -165,7 +174,7 @@ describe("AI service", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(result.provider).toBe(`openrouter:${AI_MODELS.balanced.id}`);
+    expect(result.provider).toBe(`openrouter:${AI_MODELS.fallback.id}`);
   });
 
   it("falls back safely when OpenRouter returns an error", async () => {

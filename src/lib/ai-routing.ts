@@ -2,25 +2,32 @@ import { isCbseLanguageSubject } from "./education";
 
 export const AI_MODELS = {
   reasoning: {
-    id: "nvidia/nemotron-3-ultra-550b-a55b:free",
-    label: "Nemotron 3 Ultra",
+    id: "google/gemini-3-flash-preview:nitro",
+    label: "Gemini 3 Flash",
     maxTokens: 4_096,
-    reasoning: { max_tokens: 1_024, exclude: true },
+    reasoning: { effort: "medium", exclude: true },
     temperature: 0.25,
   },
   balanced: {
-    id: "nvidia/nemotron-3-super-120b-a12b:free",
-    label: "Nemotron 3 Super",
-    maxTokens: 3_200,
-    reasoning: { max_tokens: 768, exclude: true },
-    temperature: 0.3,
+    id: "google/gemini-3-flash-preview:nitro",
+    label: "Gemini 3 Flash",
+    maxTokens: 4_096,
+    reasoning: { effort: "medium", exclude: true },
+    temperature: 0.25,
   },
   language: {
-    id: "google/gemma-4-31b-it:free",
-    label: "Gemma 4 31B",
-    maxTokens: 3_200,
-    reasoning: null,
-    temperature: 0.45,
+    id: "google/gemini-3-flash-preview:nitro",
+    label: "Gemini 3 Flash",
+    maxTokens: 4_096,
+    reasoning: { effort: "medium", exclude: true },
+    temperature: 0.25,
+  },
+  fallback: {
+    id: "google/gemini-3.1-flash-lite:nitro",
+    label: "Gemini 3.1 Flash Lite",
+    maxTokens: 4_096,
+    reasoning: { effort: "low", exclude: true },
+    temperature: 0.25,
   },
 } as const;
 
@@ -51,9 +58,6 @@ export function selectAIModel(input: RoutingInput): AIModelConfig {
 
 export function getAIModelCandidates(input: RoutingInput): AIModelConfig[] {
   const primary = selectAIModel(input);
-  const secondary =
-    primary.id === AI_MODELS.balanced.id
-      ? AI_MODELS.reasoning
-      : AI_MODELS.balanced;
-  return [primary, secondary];
+  const secondary = AI_MODELS.fallback;
+  return primary.id === secondary.id ? [primary] : [primary, secondary];
 }

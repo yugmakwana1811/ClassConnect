@@ -204,6 +204,12 @@ async function requestOpenRouter(
       ],
       max_tokens: model.maxTokens,
       ...(model.reasoning ? { reasoning: model.reasoning } : {}),
+      provider: {
+        // Nitro prioritizes the highest-throughput healthy provider while
+        // requiring support for every parameter sent by EduGrade.
+        sort: "throughput",
+        require_parameters: true,
+      },
       temperature: model.temperature,
     }),
     signal: AbortSignal.timeout(240_000),
@@ -248,6 +254,10 @@ async function* requestOpenRouterStream(
       ],
       max_tokens: model.maxTokens,
       ...(model.reasoning ? { reasoning: model.reasoning } : {}),
+      provider: {
+        sort: "throughput",
+        require_parameters: true,
+      },
       temperature: model.temperature,
       stream: true,
     }),

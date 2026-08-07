@@ -111,7 +111,7 @@ describe("AI service", () => {
     expect(body.model).toBe(AI_MODELS.reasoning.id);
     expect(body.model).not.toBe("attacker/attempted-override");
     expect(body.max_tokens).toBe(4_096);
-    expect(body.reasoning).toEqual({ effort: "medium", exclude: true });
+    expect(body.reasoning).toEqual({ max_tokens: 1_024, exclude: true });
     expect(body.provider).toEqual({
       sort: "throughput",
       require_parameters: true,

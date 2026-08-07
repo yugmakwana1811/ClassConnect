@@ -13,6 +13,9 @@ import { db } from "@/lib/db";
 import { Alert, PageHeader } from "@/components/ui";
 import { formatDateTime } from "@/lib/utils";
 import { SubmissionUploadForm } from "@/components/submission-upload-form";
+import { PdfActions } from "@/components/pdf-actions";
+import { DEMO_GENERATED_PDF_PREFIX } from "@/lib/demo-catalog";
+import { submissionStatusLabel } from "@/lib/workflow-status";
 export default async function StudentAssignment({
   params,
   searchParams,
@@ -70,7 +73,7 @@ export default async function StudentAssignment({
         description={a.description}
         action={
           <span className={`badge ${s ? "badge-teal" : "badge-coral"}`}>
-            {s ? s.status.toLowerCase() : "not submitted"}
+            {submissionStatusLabel(s, a.dueAt)}
           </span>
         }
       />
@@ -108,7 +111,9 @@ export default async function StudentAssignment({
               </p>
             </>
           )}
-          {a.attachments.map((f) => (
+          {a.attachments
+            .filter((f) => !f.url.startsWith(DEMO_GENERATED_PDF_PREFIX))
+            .map((f) => (
             <a
               href={`/api/files/assignment/${f.id}`}
               target="_blank"
@@ -120,6 +125,10 @@ export default async function StudentAssignment({
               <Download size={16} /> Open question paper
             </a>
           ))}
+          <PdfActions
+            label={a.title}
+            studentUrl={`/api/pdfs/assignment/${a.id}`}
+          />
           <div
             style={{
               marginTop: "1.2rem",

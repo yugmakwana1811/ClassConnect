@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   turbopack: { root: process.cwd() },
+  outputFileTracingIncludes: {
+    "/api/pdfs/*": [
+      "./node_modules/@expo-google-fonts/roboto/400Regular/Roboto_400Regular.ttf",
+      "./node_modules/@expo-google-fonts/roboto/700Bold/Roboto_700Bold.ttf",
+    ],
+    "/api/files/*": [
+      "./node_modules/@expo-google-fonts/roboto/400Regular/Roboto_400Regular.ttf",
+      "./node_modules/@expo-google-fonts/roboto/700Bold/Roboto_700Bold.ttf",
+    ],
+  },
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
   async headers() {
     const productionHeaders =
@@ -45,6 +55,16 @@ const nextConfig: NextConfig = {
             value: "camera=(self), microphone=(), geolocation=()",
           },
           ...productionHeaders,
+        ],
+      },
+      {
+        source: "/api/pdfs/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; frame-ancestors 'self'; sandbox",
+          },
         ],
       },
     ];

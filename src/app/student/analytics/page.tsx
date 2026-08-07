@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { learningStreak, topicPerformance } from "@/lib/analytics";
 import { PageHeader, StatCard } from "@/components/ui";
+import { PdfActions } from "@/components/pdf-actions";
 
 export default async function StudentAnalytics() {
   const user = await requireUser("STUDENT");
@@ -17,12 +18,12 @@ export default async function StudentAnalytics() {
   const [assignments, submissions, attempts, activities] = await Promise.all([
     db.assignment.findMany({
       where: {
-        status: "PUBLISHED",
+        status: { not: "DRAFT" },
         class: { enrollments: { some: { studentId } } },
       },
     }),
     db.submission.findMany({
-      where: { studentId },
+      where: { studentId, assignment: { status: { not: "DRAFT" } } },
       include: { assignment: true, result: true },
       orderBy: { updatedAt: "asc" },
     }),
@@ -84,6 +85,13 @@ export default async function StudentAnalytics() {
         title="Use evidence to revise smarter"
         description="Progress is more than one mark. These patterns come from your own published results, quiz attempts, completion, and learning activity."
       />
+      <div className="card card-pad" style={{ marginBottom: "1rem" }}>
+        <div className="eyebrow">My progress report</div>
+        <PdfActions
+          label="My progress report"
+          studentUrl={`/api/pdfs/report/${studentId}`}
+        />
+      </div>
       <div className="grid-auto">
         <StatCard
           label="Average score"

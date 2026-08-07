@@ -97,13 +97,16 @@ export default async function ParentDashboard() {
       (
         SELECT COUNT(*)::int
         FROM "Submission" submission
+        INNER JOIN "Assignment" assignment
+          ON assignment."id" = submission."assignmentId"
         WHERE submission."studentId" = student."id"
           AND submission."status" <> 'DRAFT'
+          AND assignment."status" <> 'DRAFT'
       ) AS submitted,
       (
         SELECT COUNT(*)::int
         FROM "Assignment" assignment
-        WHERE assignment."status" = 'PUBLISHED'
+        WHERE assignment."status" <> 'DRAFT'
           AND EXISTS (
             SELECT 1
             FROM "ClassEnrollment" enrollment
@@ -137,6 +140,7 @@ export default async function ParentDashboard() {
           AND activity."entityType" IN (
             'AIContentGeneration',
             'Submission',
+            'Result',
             'QuizAttempt',
             'ClassRoom'
           )

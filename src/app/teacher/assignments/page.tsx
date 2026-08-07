@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { EmptyState, PageHeader, StatCard } from "@/components/ui";
 import { formatDate, relativeDue } from "@/lib/utils";
+import { assignmentStatusLabel } from "@/lib/workflow-status";
 export default async function Assignments() {
   const user = await requireUser("TEACHER");
   const list = await db.assignment.findMany({
@@ -83,7 +84,7 @@ export default async function Assignments() {
                     <span
                       className={`badge ${a.status === "PUBLISHED" ? "badge-teal" : a.status === "CLOSED" ? "badge-coral" : ""}`}
                     >
-                      {a.status.toLowerCase()}
+                      {assignmentStatusLabel(a.status)}
                     </span>
                   </td>
                   <td>

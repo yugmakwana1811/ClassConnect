@@ -15,6 +15,7 @@ import { db } from "@/lib/db";
 import { studentPerformanceSummary } from "@/lib/student-insights";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { EmptyState, PageHeader, StatCard } from "@/components/ui";
+import { PdfActions } from "@/components/pdf-actions";
 
 function promptField(prompt: Prisma.JsonValue, field: string) {
   if (!prompt || typeof prompt !== "object" || Array.isArray(prompt))
@@ -51,7 +52,7 @@ export default async function StudentInsights({
   if (!student) notFound();
 
   const [
-    publishedAssignments,
+    assignedAssessments,
     submissions,
     quizAttempts,
     attendance,
@@ -61,7 +62,7 @@ export default async function StudentInsights({
     await Promise.all([
       db.assignment.findMany({
         where: {
-          status: "PUBLISHED",
+          status: { not: "DRAFT" },
           class: {
             teacherId,
             enrollments: { some: { studentId: student.id } },
@@ -72,7 +73,7 @@ export default async function StudentInsights({
       db.submission.findMany({
         where: {
           studentId: student.id,
-          assignment: { class: { teacherId } },
+          assignment: { status: { not: "DRAFT" }, class: { teacherId } },
         },
         include: {
           assignment: {
@@ -140,10 +141,13 @@ export default async function StudentInsights({
       date: attempt.submittedAt,
     })),
   ];
+  const submittedCount = submissions.filter(
+    (submission) => submission.status !== "DRAFT",
+  ).length;
   const summary = studentPerformanceSummary(
     scores,
-    submissions.filter((submission) => submission.status !== "DRAFT").length,
-    publishedAssignments.length,
+    submittedCount,
+    assignedAssessments.length,
   );
   const attendancePresent = attendance.filter(
     (record) => record.status === "PRESENT" || record.status === "LATE",
@@ -206,6 +210,13 @@ export default async function StudentInsights({
           </Link>
         }
       />
+      <div className="card card-pad" style={{ marginBottom: "1rem" }}>
+        <div className="eyebrow">Downloadable progress report</div>
+        <PdfActions
+          label={`${student.user.name} progress report`}
+          studentUrl={`/api/pdfs/report/${student.id}`}
+        />
+      </div>
 
       <div className="facts-strip" aria-label="Student details">
         <div className="fact">
@@ -250,7 +261,7 @@ export default async function StudentInsights({
         <StatCard
           label="Work completion"
           value={summary.completionRate === null ? "—" : `${summary.completionRate}%`}
-          detail={`${submissions.filter((submission) => submission.status !== "DRAFT").length} submitted of ${publishedAssignments.length} published`}
+          detail={`${submittedCount} submitted of ${assignedAssessments.length} assigned`}
           icon={CheckCircle2}
         />
         <StatCard

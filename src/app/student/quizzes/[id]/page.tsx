@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui";
 import { TestLockdownForm } from "@/components/test-lockdown-form";
+import { PdfActions } from "@/components/pdf-actions";
 export default async function QuizDetail({
   params,
   searchParams,
@@ -58,6 +59,13 @@ export default async function QuizDetail({
           q.description ?? "Answer every question, then submit when ready."
         }
       />
+      <div className="card card-pad" style={{ marginBottom: "1rem" }}>
+        <div className="eyebrow">Printable version</div>
+        <PdfActions
+          label={q.title}
+          studentUrl={`/api/pdfs/quiz/${q.id}`}
+        />
+      </div>
       {error && <div className="alert alert-error">{error}</div>}
       {result ? (
         <div>

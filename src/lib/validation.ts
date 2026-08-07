@@ -126,7 +126,15 @@ export const assignmentSchema = z.object({
   description: z.string().min(10).max(2000),
   instructions: z.string().max(2000).optional(),
   topic: z.string().trim().min(2).max(120),
-  type: z.enum(["Assignment", "Homework", "Test", "Worksheet", "Practice"]),
+  type: z.enum([
+    "Assignment",
+    "Homework",
+    "Test",
+    "Worksheet",
+    "Practice",
+    "Project",
+    "Classwork",
+  ]),
   maxMarks: z.coerce.number().int().min(1).max(500),
   dueAt: z
     .string()

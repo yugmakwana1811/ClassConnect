@@ -67,7 +67,7 @@ export default async function TeacherDashboard() {
       SELECT
         (SELECT COUNT(*)::int FROM "ClassRoom" c WHERE c."teacherId" = ${tid}) AS classes,
         (
-          SELECT COUNT(*)::int
+          SELECT COUNT(DISTINCT e."studentId")::int
           FROM "ClassEnrollment" e
           INNER JOIN "ClassRoom" c ON c."id" = e."classId"
           WHERE c."teacherId" = ${tid}

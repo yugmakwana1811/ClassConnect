@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { EmptyState, PageHeader, StatCard } from "@/components/ui";
+import { PdfActions } from "@/components/pdf-actions";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { studentPerformanceSummary } from "@/lib/student-insights";
@@ -146,6 +147,7 @@ export default async function ParentStudentProgressPage({
           in: [
             "AIContentGeneration",
             "Submission",
+            "Result",
             "QuizAttempt",
             "ClassRoom",
           ],
@@ -253,6 +255,13 @@ export default async function ParentStudentProgressPage({
         title={student.user.name}
         description="A complete family view of published results, learning activity, attendance, class updates, and AI Studio study history."
       />
+      <div className="card card-pad" style={{ marginBottom: "1rem" }}>
+        <div className="eyebrow">Family progress report</div>
+        <PdfActions
+          label={`${student.user.name} progress report`}
+          studentUrl={`/api/pdfs/report/${student.id}`}
+        />
+      </div>
       <div className="facts-strip" aria-label="Student details">
         <div className="fact">
           <span>Roll number</span>
@@ -572,14 +581,16 @@ export default async function ParentStudentProgressPage({
                 style={{ padding: ".8rem 0", borderBottom: "1px solid var(--line)" }}
               >
                 <strong>{submission.assignment.title}</strong>
-                {submission.result?.teacherNote ? (
-                  <p style={{ color: "var(--muted)", lineHeight: 1.55 }}>
-                    {submission.result.teacherNote}
-                  </p>
-                ) : null}
-                {submission.feedback.map((feedback) => (
-                  <p className="hint" key={feedback.id} style={{ lineHeight: 1.55 }}>
-                    {feedback.content}
+                {[
+                  ...new Set(
+                    [
+                      submission.result?.teacherNote,
+                      ...submission.feedback.map((feedback) => feedback.content),
+                    ].filter((content): content is string => Boolean(content)),
+                  ),
+                ].map((content) => (
+                  <p className="hint" key={content} style={{ lineHeight: 1.55 }}>
+                    {content}
                   </p>
                 ))}
               </div>

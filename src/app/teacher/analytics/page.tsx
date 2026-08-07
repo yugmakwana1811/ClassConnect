@@ -19,9 +19,8 @@ export default async function TeacherAnalytics() {
   const [assignments, submissions, attendance, quizAttempts, generations] =
     await Promise.all([
       db.assignment.findMany({
-        where: { class: { teacherId } },
+        where: { status: { not: "DRAFT" }, class: { teacherId } },
         include: {
-          _count: { select: { submissions: true } },
           class: { include: { _count: { select: { enrollments: true } } } },
         },
       }),
@@ -52,10 +51,9 @@ export default async function TeacherAnalytics() {
         percentages.reduce((sum, score) => sum + score, 0) / percentages.length,
       )
     : 0;
-  const completed = assignments.reduce(
-    (sum, assignment) => sum + assignment._count.submissions,
-    0,
-  );
+  const completed = submissions.filter(
+    (submission) => submission.status !== "DRAFT",
+  ).length;
   const expected = assignments.reduce(
     (sum, assignment) => sum + assignment.class._count.enrollments,
     0,

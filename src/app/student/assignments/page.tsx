@@ -3,7 +3,8 @@ import { ArrowRight, CheckCircle2, Clock3, FileText } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { EmptyState, PageHeader, StatCard } from "@/components/ui";
-import { formatDate, relativeDue } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { submissionStatusLabel } from "@/lib/workflow-status";
 export default async function StudentAssignments() {
   const user = await requireUser("STUDENT");
   const list = await db.assignment.findMany({
@@ -97,10 +98,10 @@ export default async function StudentAssignments() {
                 >
                   <span className={`badge ${s ? "badge-teal" : "badge-coral"}`}>
                     {s
-                      ? s.status.toLowerCase()
+                      ? submissionStatusLabel(s, a.dueAt)
                       : a.status === "CLOSED"
                         ? "closed"
-                        : relativeDue(a.dueAt)}
+                        : submissionStatusLabel(null, a.dueAt)}
                   </span>
                   <ArrowRight size={18} />
                 </div>

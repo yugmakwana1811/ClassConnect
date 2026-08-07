@@ -29,6 +29,84 @@
   --shadow-lg: 0 28px 80px rgba(11, 18, 32, 0.14);
 }
 
+.pdf-actions {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+}
+
+.pdf-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.pdf-action-buttons .btn {
+  flex: 1 1 145px;
+}
+
+.pdf-preview {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.pdf-preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.pdf-preview-frame {
+  display: block;
+  width: 100%;
+  height: min(72vh, 760px);
+  min-height: 480px;
+  border: 0;
+  background: #eef1f5;
+}
+
+.pdf-preview-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 90px;
+  color: var(--muted);
+}
+
+.pdf-preview-spinner {
+  animation: pdf-preview-spin 0.8s linear infinite;
+}
+
+@keyframes pdf-preview-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .pdf-preview-head {
+    align-items: flex-start;
+  }
+
+  .pdf-preview-frame {
+    height: 62vh;
+    min-height: 360px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-preview-spinner {
+    animation: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

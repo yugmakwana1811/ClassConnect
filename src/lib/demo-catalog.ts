@@ -741,28 +741,89 @@ export type DemoSubmission = {
   feedback: string | null;
 };
 
-const submissionNotes = [
-  "I completed the numerical work first and added a short check below each final answer.",
-  "My response includes the working table and the case evidence used for each point.",
-  "I corrected the first calculation after checking the formula and kept both steps visible.",
-  "I completed the main questions but marked one part where I was unsure about the final treatment.",
-  "I used headings for each answer and added a one-sentence interpretation of the result.",
-  "I revised this attempt using the class checklist and made the final explanation more specific.",
-];
+const subjectSubmissionNotes: Record<string, string[]> = {
+  Accountancy: [
+    "I completed the numerical work first and added a check below each final balance.",
+    "My response includes the working notes and journal logic used for each adjustment.",
+    "I corrected the first calculation after checking the ratio and kept both steps visible.",
+  ],
+  Economics: [
+    "I showed the formula before each calculation and interpreted the final value.",
+    "My response uses the case data to support each economic explanation.",
+    "I revised the diagram labels and added a short policy conclusion.",
+  ],
+  "Business Studies": [
+    "I used headings for each answer and linked every point to the case evidence.",
+    "My response identifies the concept before explaining how it applies to the business.",
+    "I revised this attempt using the class checklist and made the final recommendation specific.",
+  ],
+  "Informatics Practices": [
+    "I included the query or code, expected output and a short explanation of the result.",
+    "I checked the column names and syntax before recording the final output.",
+    "I corrected one statement after tracing the data flow and kept the corrected version visible.",
+  ],
+  English: [
+    "I planned each response with a clear claim, supporting detail and explanation.",
+    "I revised the draft for grammar, paragraph flow and precise word choice.",
+    "I used the passage evidence directly and kept the final response within the word limit.",
+  ],
+};
 
-const feedbackOpeners = [
-  "Correct method. Recheck the final calculation.",
-  "Strong understanding. Show complete working for the longer question.",
-  "Good improvement from your previous assessment.",
-  "Review the treatment of goodwill before retrying.",
-  "Clear explanation, but support your answer with one more point.",
-  "Your structure is effective. Tighten the final conclusion.",
-];
+const subjectFeedback: Record<string, { openers: string[]; focus: string[] }> = {
+  Accountancy: {
+    openers: [
+      "Correct method. Recheck the final calculation.",
+      "Strong understanding. Show complete working for the longer question.",
+      "Good improvement from your previous assessment.",
+      "Review the treatment of goodwill before retrying.",
+    ],
+    focus: ["working-note accuracy", "capital-account reconciliation", "ratio application"],
+  },
+  Economics: {
+    openers: [
+      "The economic reasoning is clear. Use the supplied data more explicitly.",
+      "Your calculation is correct. Add a one-sentence interpretation.",
+      "Good improvement in linking the concept to the policy outcome.",
+      "The diagram is useful. Label the shift and equilibrium precisely.",
+    ],
+    focus: ["data-supported explanation", "aggregate calculations", "policy evaluation"],
+  },
+  "Business Studies": {
+    openers: [
+      "You identified the correct principle. Link it more closely to the case evidence.",
+      "The explanation is well structured. Add one practical implication.",
+      "Good improvement in applying the concept rather than only defining it.",
+      "Your recommendation is sensible. Justify it with one more business factor.",
+    ],
+    focus: ["case evidence", "concept application", "concise conclusions"],
+  },
+  "Informatics Practices": {
+    openers: [
+      "The approach is correct. Recheck the syntax in the final statement.",
+      "Your output matches the task. Explain the transformation step more clearly.",
+      "Good improvement in tracing the code before writing the result.",
+      "The query logic is sound. Verify the selected columns and sort order.",
+    ],
+    focus: ["syntax validation", "output interpretation", "data presentation"],
+  },
+  English: {
+    openers: [
+      "The central idea is clear. Support it with one more precise detail.",
+      "Your response is well organised. Tighten the final sentence.",
+      "Good improvement in paragraph flow and word choice.",
+      "The evidence is relevant. Explain how it supports your claim.",
+    ],
+    focus: ["textual support", "answer structure", "editing accuracy"],
+  },
+};
 
 export function buildDemoSubmissions(): DemoSubmission[] {
   const records: DemoSubmission[] = [];
   const activeAssignments = DEMO_ASSIGNMENTS.filter((item) => item.status !== "DRAFT");
   for (const [assignmentIndex, assignment] of activeAssignments.entries()) {
+    const subject = DEMO_CLASSES.find((item) => item.id === assignment.classId)?.subject ?? "English";
+    const notes = subjectSubmissionNotes[subject] ?? subjectSubmissionNotes.English;
+    const feedbackOptions = subjectFeedback[subject] ?? subjectFeedback.English;
     for (const [studentIndex, student] of DEMO_STUDENTS.entries()) {
       const completionSignal = (assignmentIndex * 17 + studentIndex * 23 + 11) % 100;
       if (completionSignal >= student.completionRate) continue;
@@ -790,13 +851,13 @@ export function buildDemoSubmissions(): DemoSubmission[] {
         : null;
       const feedback = marks === null
         ? null
-        : `${feedbackOpeners[(assignmentIndex + studentIndex) % feedbackOpeners.length]} Focus next on ${student.improvements[(assignmentIndex + studentIndex) % student.improvements.length]}.`;
+        : `${feedbackOptions.openers[(assignmentIndex + studentIndex) % feedbackOptions.openers.length]} Focus next on ${feedbackOptions.focus[(assignmentIndex + studentIndex) % feedbackOptions.focus.length]}.`;
       records.push({
         id: `demo-submission-${assignment.id.replace("demo-work-", "")}-${student.key}`,
         assignmentId: assignment.id,
         studentKey: student.key,
         status,
-        note: `${submissionNotes[(assignmentIndex + studentIndex) % submissionNotes.length]} Strength used: ${student.strengths[(assignmentIndex + studentIndex) % student.strengths.length]}.`,
+        note: notes[(assignmentIndex + studentIndex) % notes.length],
         submittedAt,
         pageCount: status === "DRAFT" ? 1 : 1 + ((assignmentIndex + studentIndex) % 3 === 0 ? 1 : 0),
         marks,

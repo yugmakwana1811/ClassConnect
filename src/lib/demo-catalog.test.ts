@@ -48,6 +48,7 @@ describe("Class 12 Commerce demo catalogue", () => {
     );
     for (const submission of submissions) {
       const assignment = DEMO_ASSIGNMENTS.find((item) => item.id === submission.assignmentId)!;
+      const subject = DEMO_CLASSES.find((item) => item.id === assignment.classId)!.subject;
       expect(assignment).toBeTruthy();
       expect(assignment.status).not.toBe("DRAFT");
       if (submission.status === "DRAFT") expect(submission.submittedAt).toBeNull();
@@ -55,6 +56,9 @@ describe("Class 12 Commerce demo catalogue", () => {
       if (submission.marks !== null) {
         expect(submission.marks).toBeGreaterThanOrEqual(0);
         expect(submission.marks).toBeLessThanOrEqual(assignment.maxMarks);
+      }
+      if (subject !== "Accountancy") {
+        expect((submission.feedback ?? "").toLowerCase()).not.toContain("goodwill");
       }
       expect(submission.resultPublished).toBe(submission.status === "PUBLISHED");
     }

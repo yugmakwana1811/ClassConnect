@@ -2034,6 +2034,19 @@ tbody tr:last-child td {
 
 .route-motion {
   min-width: 0;
+  animation: route-motion-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes route-motion-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Teacher class cards */
@@ -2374,6 +2387,9 @@ body.test-lockdown-active {
   background: transparent;
   text-align: left;
   cursor: pointer;
+  transition:
+    height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease-out;
 }
 
 .hover-expand-item + .hover-expand-item {
@@ -2384,6 +2400,9 @@ body.test-lockdown-active {
   position: absolute;
   inset: 0;
   display: block;
+  transition:
+    opacity 0.38s ease-out,
+    transform 0.52s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .hover-expand-image img {
@@ -2422,12 +2441,14 @@ body.test-lockdown-active {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.1em;
+  transition: color 0.24s ease-out;
 }
 
 .hover-expand-label {
   font-size: clamp(1.08rem, 2vw, 1.5rem);
   font-weight: 790;
   letter-spacing: -0.025em;
+  transition: color 0.24s ease-out;
 }
 
 .hover-expand-description {
@@ -2436,6 +2457,9 @@ body.test-lockdown-active {
   font-size: 0.78rem;
   white-space: nowrap;
   text-overflow: ellipsis;
+  transition:
+    opacity 0.28s ease-out,
+    transform 0.28s ease-out;
 }
 
 .hover-expand-meta {
@@ -2447,6 +2471,7 @@ body.test-lockdown-active {
   font-weight: 820;
   text-transform: uppercase;
   letter-spacing: 0.14em;
+  transition: color 0.24s ease-out;
 }
 
 /* Motion FAQ */
@@ -2500,6 +2525,13 @@ body.test-lockdown-active {
   border-radius: 22px;
   background: white;
   box-shadow: 0 4px 18px rgba(11, 18, 32, 0.045);
+  transform: scale(0.99);
+  transform-origin: 50% 0;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-faq-item[data-open="true"] {
+  transform: scale(1);
 }
 
 .motion-faq-trigger {
@@ -2534,17 +2566,41 @@ body.test-lockdown-active {
   border-radius: 50%;
   color: var(--indigo);
   background: #f4f4ff;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-faq-icon[data-open="true"] {
+  transform: rotate(180deg) scale(1.04);
 }
 
 .motion-faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
   overflow: hidden;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease-out;
+}
+
+.motion-faq-panel[aria-hidden="false"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
 
 .motion-faq-answer {
+  min-height: 0;
+  overflow: hidden;
   padding: 0 4.9rem 1.35rem 1.35rem;
   color: var(--muted);
   font-size: 0.93rem;
   line-height: 1.75;
+  transform: translateY(-6px);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-faq-panel[aria-hidden="false"] .motion-faq-answer {
+  transform: translateY(0);
 }
 
 @media (max-width: 1080px) {
@@ -6168,6 +6224,7 @@ tbody tr:hover {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.55rem;
+  animation: feature-atlas-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .feature-atlas-group {
@@ -6186,6 +6243,7 @@ tbody tr:hover {
   box-shadow: 0 6px 20px rgba(45, 74, 99, 0.035);
   text-align: left;
   cursor: pointer;
+  animation: feature-atlas-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
   transition:
     color 0.18s ease,
     border-color 0.18s ease,
@@ -6260,6 +6318,32 @@ tbody tr:hover {
     radial-gradient(circle at 0 0, rgba(70, 111, 174, 0.08), transparent 38%),
     rgba(255, 255, 255, 0.84);
   box-shadow: 0 10px 28px rgba(45, 74, 99, 0.045);
+  animation: feature-atlas-detail-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+@keyframes feature-atlas-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes feature-atlas-detail-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .feature-atlas-detail-heading {

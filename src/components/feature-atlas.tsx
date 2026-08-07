@@ -15,7 +15,6 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRef, useState, type KeyboardEvent } from "react";
 
 type Audience = "teacher" | "student" | "ai" | "shared";
@@ -155,7 +154,6 @@ const filters: Array<{ id: Filter; label: string }> = [
 export function FeatureAtlas() {
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedGroup, setSelectedGroup] = useState(groups[0].title);
-  const reduceMotion = useReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const groupRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -248,15 +246,7 @@ export function FeatureAtlas() {
                 }}
               >
                 {active ? (
-                  <motion.span
-                    className="feature-atlas-filter-active"
-                    layoutId="feature-atlas-filter"
-                    transition={
-                      reduceMotion
-                        ? { duration: 0 }
-                        : { type: "spring", stiffness: 420, damping: 34 }
-                    }
-                  />
+                  <span className="feature-atlas-filter-active" />
                 ) : null}
                 <span>{item.label}</span>
               </button>
@@ -274,24 +264,17 @@ export function FeatureAtlas() {
         role="tabpanel"
         aria-labelledby={`feature-atlas-tab-${filter}`}
       >
-        <motion.div
+        <div
           className="feature-atlas-grid feature-atlas-compact-grid"
           data-filter={filter}
           key={filter}
-          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }
-          }
           aria-label="Capability areas"
         >
           {visibleGroups.map((group, index) => {
             const Icon = group.icon;
             const active = group.title === activeGroup.title;
             return (
-              <motion.button
+              <button
                 className={`feature-atlas-group${active ? " is-active" : ""}`}
                 type="button"
                 key={group.title}
@@ -303,12 +286,8 @@ export function FeatureAtlas() {
                 ref={(element) => {
                   groupRefs.current[index] = element;
                 }}
-                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: reduceMotion ? 0 : 0.24,
-                  delay: reduceMotion ? 0 : Math.min(index * 0.02, 0.12),
-                  ease: [0.22, 1, 0.36, 1],
+                style={{
+                  animationDelay: `${Math.min(index * 0.02, 0.12)}s`,
                 }}
               >
                 <span className="feature-atlas-icon" aria-hidden="true">
@@ -321,29 +300,20 @@ export function FeatureAtlas() {
                   <strong>{group.title}</strong>
                 </span>
                 <ChevronRight size={16} aria-hidden="true" />
-              </motion.button>
+              </button>
             );
           })}
-        </motion.div>
+        </div>
         <p className="feature-atlas-swipe-hint" aria-hidden="true">
           Swipe to explore all capability areas →
         </p>
 
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.section
+          <section
             className="feature-atlas-detail"
             id="feature-atlas-detail"
             key={`${filter}-${activeGroup.title}`}
             role="region"
             aria-labelledby={`feature-atlas-group-${activeGroupIndex}`}
-            initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
-            }
           >
             <div className="feature-atlas-detail-heading">
               <span className="feature-atlas-detail-icon" aria-hidden="true">
@@ -362,8 +332,7 @@ export function FeatureAtlas() {
                 </li>
               ))}
             </ul>
-          </motion.section>
-        </AnimatePresence>
+          </section>
       </div>
     </div>
   );

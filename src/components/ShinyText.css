@@ -2,6 +2,10 @@
   display: inline-block;
 }
 
+.shiny-text[data-pause-on-hover="true"]:hover {
+  animation-play-state: paused !important;
+}
+
 .cinematic-no-motion .shiny-text,
 .cinematic-lite .shiny-text {
   background-position: 150% center !important;
@@ -10,5 +14,6 @@
 @media (prefers-reduced-motion: reduce) {
   .shiny-text {
     background-position: 150% center !important;
+    animation: none !important;
   }
 }

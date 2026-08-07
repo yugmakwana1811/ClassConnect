@@ -13,101 +13,172 @@ import { db } from "@/lib/db";
 import { studentPerformanceSummary } from "@/lib/student-insights";
 import { formatDateTime } from "@/lib/utils";
 
+type ParentDashboardStudent = {
+  student_id: string;
+  user_id: string;
+  student_name: string;
+  grade: string | null;
+  relationship: string | null;
+  scores: Array<{
+    kind: "assignment" | "quiz";
+    title: string;
+    topic: string | null;
+    marks: number;
+    maxMarks: number;
+    date: string;
+  }>;
+  submitted: number;
+  expected_assignments: number;
+  attendance_records: number;
+  attendance_present: number;
+  ai_searches: number;
+  recent_activity: {
+    action: string;
+    createdAt: string;
+  } | null;
+};
+
 export default async function ParentDashboard() {
   const user = await requireUser("PARENT");
-  const connections = await db.parentStudent.findMany({
-    where: { parentId: user.parentProfile!.id },
-    include: {
-      student: {
-        include: {
-          user: { select: { name: true, id: true } },
-          enrollments: { include: { class: true } },
-          submissions: {
-            include: { assignment: true, result: true },
-            orderBy: { updatedAt: "desc" },
-          },
-          quizAttempts: {
-            include: { quiz: { include: { questions: true } } },
-            orderBy: { submittedAt: "desc" },
-          },
-          attendance: true,
-        },
-      },
-    },
-    orderBy: { linkedAt: "asc" },
-  });
-
-  const studentCards = await Promise.all(
-    connections.map(async ({ student, relationship }) => {
-      const [expectedAssignments, aiSearches, recentActivity] =
-        await Promise.all([
-          db.assignment.count({
-            where: {
-              status: "PUBLISHED",
-              class: { enrollments: { some: { studentId: student.id } } },
-            },
-          }),
-          db.aIContentGeneration.count({ where: { userId: student.userId } }),
-          db.activityLog.findFirst({
-            where: {
-              userId: student.userId,
-              entityType: {
-                in: [
-                  "AIContentGeneration",
-                  "Submission",
-                  "QuizAttempt",
-                  "ClassRoom",
-                ],
-              },
-            },
-            orderBy: { createdAt: "desc" },
-          }),
-        ]);
-      const publishedSubmissions = student.submissions.filter(
-        (submission) => submission.result?.published,
-      );
-      const scores = [
-        ...publishedSubmissions.map((submission) => ({
-          kind: "assignment" as const,
-          title: submission.assignment.title,
-          topic: submission.assignment.topic,
-          marks: Number(submission.result!.marks),
-          maxMarks: submission.assignment.maxMarks,
-          date: submission.result!.publishedAt ?? submission.updatedAt,
-        })),
-        ...student.quizAttempts.map((attempt) => ({
-          kind: "quiz" as const,
-          title: attempt.quiz.title,
-          marks: Number(attempt.score),
-          maxMarks: attempt.quiz.questions.reduce(
-            (total, question) => total + question.marks,
-            0,
+  const connections = await db.$queryRaw<ParentDashboardStudent[]>`
+    SELECT
+      student."id" AS student_id,
+      student."userId" AS user_id,
+      student_user."name" AS student_name,
+      student."grade",
+      connection."relationship",
+      (
+        SELECT COALESCE(
+          JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+              'kind', score.kind,
+              'title', score.title,
+              'topic', score.topic,
+              'marks', score.marks,
+              'maxMarks', score.max_marks,
+              'date', score.score_date
+            )
+            ORDER BY score.score_date DESC
           ),
-          date: attempt.submittedAt,
-        })),
-      ];
-      const submitted = student.submissions.filter(
-        (submission) => submission.status !== "DRAFT",
-      ).length;
-      const attendancePresent = student.attendance.filter(
-        (record) => record.status === "PRESENT" || record.status === "LATE",
-      ).length;
+          '[]'::jsonb
+        )
+        FROM (
+          SELECT
+            'assignment'::text AS kind,
+            assignment."title",
+            assignment."topic",
+            result."marks"::double precision AS marks,
+            assignment."maxMarks" AS max_marks,
+            COALESCE(result."publishedAt", submission."updatedAt") AS score_date
+          FROM "Submission" submission
+          INNER JOIN "Assignment" assignment
+            ON assignment."id" = submission."assignmentId"
+          INNER JOIN "Result" result
+            ON result."submissionId" = submission."id"
+          WHERE submission."studentId" = student."id"
+            AND result."published" = true
+
+          UNION ALL
+
+          SELECT
+            'quiz'::text AS kind,
+            quiz."title",
+            NULL::text AS topic,
+            attempt."score"::double precision AS marks,
+            COALESCE(SUM(question."marks"), 0)::int AS max_marks,
+            attempt."submittedAt" AS score_date
+          FROM "QuizAttempt" attempt
+          INNER JOIN "Quiz" quiz ON quiz."id" = attempt."quizId"
+          LEFT JOIN "QuizQuestion" question ON question."quizId" = quiz."id"
+          WHERE attempt."studentId" = student."id"
+          GROUP BY attempt."id", quiz."id"
+        ) score
+      ) AS scores,
+      (
+        SELECT COUNT(*)::int
+        FROM "Submission" submission
+        WHERE submission."studentId" = student."id"
+          AND submission."status" <> 'DRAFT'
+      ) AS submitted,
+      (
+        SELECT COUNT(*)::int
+        FROM "Assignment" assignment
+        WHERE assignment."status" = 'PUBLISHED'
+          AND EXISTS (
+            SELECT 1
+            FROM "ClassEnrollment" enrollment
+            WHERE enrollment."studentId" = student."id"
+              AND enrollment."classId" = assignment."classId"
+          )
+      ) AS expected_assignments,
+      (
+        SELECT COUNT(*)::int
+        FROM "AttendanceRecord" attendance
+        WHERE attendance."studentId" = student."id"
+      ) AS attendance_records,
+      (
+        SELECT COUNT(*)::int
+        FROM "AttendanceRecord" attendance
+        WHERE attendance."studentId" = student."id"
+          AND attendance."status" IN ('PRESENT', 'LATE')
+      ) AS attendance_present,
+      (
+        SELECT COUNT(*)::int
+        FROM "AIContentGeneration" generation
+        WHERE generation."userId" = student."userId"
+      ) AS ai_searches,
+      (
+        SELECT JSONB_BUILD_OBJECT(
+          'action', activity."action",
+          'createdAt', activity."createdAt"
+        )
+        FROM "ActivityLog" activity
+        WHERE activity."userId" = student."userId"
+          AND activity."entityType" IN (
+            'AIContentGeneration',
+            'Submission',
+            'QuizAttempt',
+            'ClassRoom'
+          )
+        ORDER BY activity."createdAt" DESC
+        LIMIT 1
+      ) AS recent_activity
+    FROM "ParentStudent" connection
+    INNER JOIN "StudentProfile" student
+      ON student."id" = connection."studentId"
+    INNER JOIN "User" student_user ON student_user."id" = student."userId"
+    WHERE connection."parentId" = ${user.parentProfile!.id}
+    ORDER BY connection."linkedAt" ASC
+  `;
+
+  const studentCards = connections.map((connection) => {
+      const scores = connection.scores.map((score) => ({
+        ...score,
+        date: new Date(score.date),
+      }));
       return {
-        student,
-        relationship,
-        aiSearches,
-        recentActivity,
+        student: {
+          id: connection.student_id,
+          userId: connection.user_id,
+          grade: connection.grade,
+          user: { name: connection.student_name },
+        },
+        relationship: connection.relationship,
+        aiSearches: connection.ai_searches,
+        recentActivity: connection.recent_activity,
         summary: studentPerformanceSummary(
           scores,
-          submitted,
-          expectedAssignments,
+          connection.submitted,
+          connection.expected_assignments,
         ),
-        attendanceRate: student.attendance.length
-          ? Math.round((attendancePresent / student.attendance.length) * 100)
+        attendanceRate: connection.attendance_records
+          ? Math.round(
+              (connection.attendance_present / connection.attendance_records) *
+                100,
+            )
           : null,
       };
-    }),
-  );
+    });
 
   const averages = studentCards
     .map((card) => card.summary.overallAverage)

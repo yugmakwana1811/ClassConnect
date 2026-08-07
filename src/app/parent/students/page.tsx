@@ -16,6 +16,19 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
 
+type ParentConnectionRow = {
+  id: string;
+  relationship: string | null;
+  linkedAt: Date;
+  student_id: string;
+  student_name: string;
+  grade: string | null;
+  roll_number: string | null;
+  enrollments: Array<{ name: string; subject: string }>;
+  submissions_count: number;
+  quizzes_count: number;
+};
+
 export default async function ParentStudentsPage({
   searchParams,
 }: {
@@ -25,23 +38,48 @@ export default async function ParentStudentsPage({
     searchParams,
     requireUser("PARENT"),
   ]);
-  const connections = await db.parentStudent.findMany({
-    where: { parentId: user.parentProfile!.id },
-    include: {
-      student: {
-        include: {
-          user: { select: { name: true, email: true } },
-          enrollments: {
-            include: { class: { select: { name: true, subject: true } } },
-          },
-          _count: {
-            select: { submissions: true, quizAttempts: true, attendance: true },
-          },
-        },
-      },
-    },
-    orderBy: { linkedAt: "asc" },
-  });
+  const connections = await db.$queryRaw<ParentConnectionRow[]>`
+    SELECT
+      connection."id",
+      connection."relationship",
+      connection."linkedAt",
+      student."id" AS student_id,
+      student_user."name" AS student_name,
+      student."grade",
+      student."rollNumber" AS roll_number,
+      (
+        SELECT COALESCE(
+          JSONB_AGG(
+            JSONB_BUILD_OBJECT(
+              'name', classroom."name",
+              'subject', classroom."subject"
+            )
+            ORDER BY enrollment."joinedAt" ASC
+          ),
+          '[]'::jsonb
+        )
+        FROM "ClassEnrollment" enrollment
+        INNER JOIN "ClassRoom" classroom
+          ON classroom."id" = enrollment."classId"
+        WHERE enrollment."studentId" = student."id"
+      ) AS enrollments,
+      (
+        SELECT COUNT(*)::int
+        FROM "Submission" submission
+        WHERE submission."studentId" = student."id"
+      ) AS submissions_count,
+      (
+        SELECT COUNT(*)::int
+        FROM "QuizAttempt" attempt
+        WHERE attempt."studentId" = student."id"
+      ) AS quizzes_count
+    FROM "ParentStudent" connection
+    INNER JOIN "StudentProfile" student
+      ON student."id" = connection."studentId"
+    INNER JOIN "User" student_user ON student_user."id" = student."userId"
+    WHERE connection."parentId" = ${user.parentProfile!.id}
+    ORDER BY connection."linkedAt" ASC
+  `;
 
   return (
     <div className="page">
@@ -132,10 +170,10 @@ export default async function ParentStudentsPage({
                     <div className="eyebrow">
                       {connection.relationship || "Parent or guardian"}
                     </div>
-                    <h2>{connection.student.user.name}</h2>
+                    <h2>{connection.student_name}</h2>
                     <div className="hint">
-                      Grade {connection.student.grade || "—"} · Roll number{" "}
-                      {connection.student.rollNumber || "—"}
+                      Grade {connection.grade || "—"} · Roll number{" "}
+                      {connection.roll_number || "—"}
                     </div>
                   </div>
                   <span className="badge badge-teal">
@@ -145,23 +183,23 @@ export default async function ParentStudentsPage({
                 <div className="facts-strip" style={{ margin: ".9rem 0" }}>
                   <div className="fact">
                     <span>Classes</span>
-                    <strong>{connection.student.enrollments.length}</strong>
+                    <strong>{connection.enrollments.length}</strong>
                   </div>
                   <div className="fact">
                     <span>Submissions</span>
-                    <strong>{connection.student._count.submissions}</strong>
+                    <strong>{connection.submissions_count}</strong>
                   </div>
                   <div className="fact">
                     <span>Quizzes</span>
-                    <strong>{connection.student._count.quizAttempts}</strong>
+                    <strong>{connection.quizzes_count}</strong>
                   </div>
                 </div>
-                {connection.student.enrollments.length ? (
+                {connection.enrollments.length ? (
                   <p className="hint">
-                    {connection.student.enrollments
+                    {connection.enrollments
                       .map(
                         (enrollment) =>
-                          `${enrollment.class.name} (${enrollment.class.subject})`,
+                          `${enrollment.name} (${enrollment.subject})`,
                       )
                       .join(" · ")}
                   </p>
@@ -176,7 +214,7 @@ export default async function ParentStudentsPage({
                 >
                   <Link
                     className="btn btn-primary"
-                    href={`/parent/students/${connection.student.id}`}
+                    href={`/parent/students/${connection.student_id}`}
                   >
                     View complete progress <ArrowRight size={15} />
                   </Link>
@@ -185,7 +223,7 @@ export default async function ParentStudentsPage({
                     <SubmitButton
                       className="btn btn-danger"
                       pendingText="Removing…"
-                      confirmMessage={`Remove ${connection.student.user.name} from your parent workspace?`}
+                      confirmMessage={`Remove ${connection.student_name} from your parent workspace?`}
                     >
                       <UserMinus size={15} /> Remove
                     </SubmitButton>

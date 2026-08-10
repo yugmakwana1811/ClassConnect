@@ -113,7 +113,7 @@ export default function Home() {
             Sign in
           </Link>
           <Link className="btn btn-primary" href="/register">
-            Start free <ArrowRight size={16} />
+            Sign Up <ArrowRight size={16} />
           </Link>
         </div>
       </header>

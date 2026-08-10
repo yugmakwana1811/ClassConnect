@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { useRef } from "react";
 import { FloatingTooltip } from "./floating-tooltip";
 
 export function AppNavLink({
@@ -15,8 +16,16 @@ export function AppNavLink({
   icon: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const prefetched = useRef(false);
   const isOverview = href === "/teacher" || href === "/student";
   const active = isOverview ? pathname === href : pathname.startsWith(href);
+
+  function prefetchOnIntent() {
+    if (prefetched.current) return;
+    prefetched.current = true;
+    void router.prefetch(href);
+  }
 
   const link = (
     <Link
@@ -28,6 +37,9 @@ export function AppNavLink({
       // Navigate on demand so the active page stays responsive and the
       // server does not do work the user may never request.
       prefetch={false}
+      onMouseEnter={prefetchOnIntent}
+      onFocus={prefetchOnIntent}
+      onTouchStart={prefetchOnIntent}
       aria-label={label}
       aria-current={active ? "page" : undefined}
     >

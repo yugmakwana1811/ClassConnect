@@ -16,15 +16,17 @@ import {
   CinematicController,
   CinematicLayers,
 } from "@/components/cinematic-controller";
-import { CinematicInterfaceShowcase } from "@/components/cinematic-interface-showcase";
 import { FloatingTooltip } from "@/components/floating-tooltip";
-import { FeatureAtlas } from "@/components/feature-atlas";
-import { HoverExpand } from "@/components/hover-expand";
 import { Logo } from "@/components/logo";
-import { MotionAccordion } from "@/components/motion-accordion";
 import { MotionNavigationMenu } from "@/components/motion-navigation-menu";
-import TextMorph from "@/components/text-morph";
 import ShinyText from "@/components/ShinyText";
+import {
+  DeferredCinematicInterfaceShowcase,
+  DeferredFeatureAtlas,
+  DeferredHoverExpand,
+  DeferredMotionAccordion,
+  DeferredTextMorph,
+} from "@/components/deferred-marketing";
 
 const cycle = [
   "Plan",
@@ -317,7 +319,7 @@ export default function Home() {
           <span>One continuous classroom record</span>
           <strong>From first idea to next learning action.</strong>
         </div>
-        <TextMorph
+        <DeferredTextMorph
           className="cinematic-cycle-morph"
           words={cycle}
           transition={{ duration: 0.8, delay: 0.9, ease: "circInOut" }}
@@ -366,7 +368,7 @@ export default function Home() {
             </p>
           </div>
           <div data-cinematic-reveal>
-            <CinematicInterfaceShowcase />
+            <DeferredCinematicInterfaceShowcase />
           </div>
         </div>
       </section>
@@ -392,7 +394,7 @@ export default function Home() {
             </p>
           </div>
           <div data-cinematic-reveal>
-            <FeatureAtlas />
+            <DeferredFeatureAtlas />
           </div>
         </div>
       </section>
@@ -544,7 +546,7 @@ export default function Home() {
             </p>
           </div>
           <div data-cinematic-reveal>
-            <HoverExpand items={teachingMoments} />
+            <DeferredHoverExpand items={teachingMoments} />
           </div>
         </div>
       </section>
@@ -624,7 +626,7 @@ export default function Home() {
             </Link>
           </div>
           <div data-cinematic-reveal>
-            <MotionAccordion items={frequentlyAskedQuestions} />
+            <DeferredMotionAccordion items={frequentlyAskedQuestions} />
           </div>
         </div>
       </section>

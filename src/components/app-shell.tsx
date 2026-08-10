@@ -154,7 +154,7 @@ export function AppShell({
           <span className="avatar">{initials(user.name)}</span>
           <div className="account-copy">
             <strong>{user.name}</strong>
-            <Link href="/account">
+            <Link href="/account" prefetch={false}>
               <Settings size={11} /> Account settings
             </Link>
           </div>
@@ -191,7 +191,7 @@ export function AppShell({
               <span aria-hidden="true" />
               Protected workspace
             </span>
-            <Link href="/about" className="topbar-link">
+            <Link href="/about" prefetch={false} className="topbar-link">
               Help & about
             </Link>
           </div>

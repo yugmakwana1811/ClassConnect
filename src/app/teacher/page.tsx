@@ -159,7 +159,7 @@ export default async function TeacherDashboard() {
         title="Your teaching command centre"
         description="See what needs attention, pick up where you left off, and keep every class moving."
         action={
-          <Link className="btn btn-primary" href="/teacher/ai-tools" prefetch={false}>
+          <Link className="btn btn-primary" href="/teacher/ai-tools">
             <Sparkles size={17} /> Create with AI
           </Link>
         }
@@ -247,7 +247,6 @@ export default async function TeacherDashboard() {
             </p>
             <Link
               href={resolvedMetrics.pending > 0 ? "/teacher/review" : "/teacher/ai-tools"}
-              prefetch={false}
               style={{
                 color: "var(--indigo)",
                 fontWeight: 850,

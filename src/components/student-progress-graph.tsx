@@ -173,7 +173,7 @@ export function StudentProgressGraph() {
           <div className="grid-auto" style={{ marginTop: "1rem" }}>
             {data.students.map((student, index) => (
               <article key={student.id} style={{ borderLeft: `3px solid ${SERIES_COLORS[index % SERIES_COLORS.length]}`, padding: ".55rem .7rem", background: "var(--surface-subtle)", borderRadius: 8 }}>
-                <Link href={`/teacher/students/${student.id}`} prefetch={false} style={{ fontWeight: 850 }}>{student.name}</Link>
+                <Link href={`/teacher/students/${student.id}`} style={{ fontWeight: 850 }}>{student.name}</Link>
                 <div className="hint" style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", marginTop: ".2rem" }}>
                   <span>{student.average === null ? "Not assessed" : `${student.average}% average`}</span>
                   <span style={{ color: trendColor(student.trend), fontWeight: 750 }}>{student.trend}</span>

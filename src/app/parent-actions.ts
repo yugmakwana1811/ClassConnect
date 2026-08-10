@@ -115,7 +115,7 @@ export async function linkStudentAction(form: FormData) {
       redirect(`${path}?success=Student already connected`);
     throw error;
   }
-  revalidatePath("/parent");
+  revalidatePath("/parent", "layout");
   redirect(`${path}?success=Student connected`);
 }
 
@@ -146,7 +146,7 @@ export async function unlinkStudentAction(form: FormData) {
       },
     }),
   ]);
-  revalidatePath("/parent");
+  revalidatePath("/parent", "layout");
   redirect("/parent/students?success=Student connection removed");
 }
 
@@ -177,6 +177,8 @@ export async function revokeParentAccessAction(form: FormData) {
       },
     }),
   ]);
+  revalidatePath("/student", "layout");
+  revalidatePath("/parent", "layout");
   redirect("/account?success=Parent access revoked");
 }
 
@@ -197,5 +199,7 @@ export async function regenerateParentAccessCodeAction() {
       },
     }),
   ]);
+  revalidatePath("/student", "layout");
+  revalidatePath("/parent", "layout");
   redirect("/account?success=Parent access code regenerated");
 }

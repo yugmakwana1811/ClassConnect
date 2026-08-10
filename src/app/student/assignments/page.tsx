@@ -12,11 +12,17 @@ export default async function StudentAssignments() {
       status: { in: ["PUBLISHED", "CLOSED"] },
       class: { enrollments: { some: { studentId: user.studentProfile!.id } } },
     },
-    include: {
-      class: true,
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      maxMarks: true,
+      dueAt: true,
+      status: true,
+      class: { select: { name: true } },
       submissions: {
         where: { studentId: user.studentProfile!.id },
-        include: { result: true },
+        select: { status: true, submittedAt: true },
       },
     },
     orderBy: { dueAt: "asc" },

@@ -21,15 +21,26 @@ export default async function StudentAnalytics() {
         status: { not: "DRAFT" },
         class: { enrollments: { some: { studentId } } },
       },
+      select: { id: true },
     }),
     db.submission.findMany({
       where: { studentId, assignment: { status: { not: "DRAFT" } } },
-      include: { assignment: true, result: true },
+      select: {
+        status: true,
+        updatedAt: true,
+        assignment: {
+          select: { maxMarks: true, topic: true, title: true },
+        },
+        result: { select: { marks: true, published: true } },
+      },
       orderBy: { updatedAt: "asc" },
     }),
     db.quizAttempt.findMany({
       where: { studentId },
-      include: { quiz: { include: { questions: true } } },
+      select: {
+        score: true,
+        quiz: { select: { questions: { select: { marks: true } } } },
+      },
     }),
     db.activityLog.findMany({
       where: { userId: user.id },

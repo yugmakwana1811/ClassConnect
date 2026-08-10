@@ -12,7 +12,13 @@ const nextConfig: NextConfig = {
       "./node_modules/@expo-google-fonts/roboto/700Bold/Roboto_700Bold.ttf",
     ],
   },
-  experimental: { serverActions: { bodySizeLimit: "4mb" } },
+  experimental: {
+    serverActions: { bodySizeLimit: "4mb" },
+    staleTimes: {
+      dynamic: 90,
+      static: 300,
+    },
+  },
   async headers() {
     const productionHeaders =
       process.env.NODE_ENV === "production"

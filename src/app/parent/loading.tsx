@@ -1,5 +1,5 @@
-import { LoadingScreen } from "@/components/loading-screen";
+import WorkspaceLoadingShell from "@/components/workspace-loading-shell";
 
 export default function Loading() {
-  return <LoadingScreen compact />;
+  return <WorkspaceLoadingShell />;
 }

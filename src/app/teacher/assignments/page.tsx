@@ -15,7 +15,16 @@ export default async function Assignments() {
   const user = await requireUser("TEACHER");
   const list = await db.assignment.findMany({
     where: { class: { teacherId: user.teacherProfile!.id } },
-    include: { class: true, _count: { select: { submissions: true } } },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      maxMarks: true,
+      dueAt: true,
+      status: true,
+      class: { select: { name: true, subject: true } },
+      _count: { select: { submissions: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
   const published = list.filter((a) => a.status === "PUBLISHED").length;

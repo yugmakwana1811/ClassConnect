@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { createSession, homeForRole } from "@/lib/auth";
 import {
@@ -92,6 +93,7 @@ export async function registerAction(form: FormData) {
     await db.activityLog.create({
       data: { userId: user.id, action: "Created account", entityType: "User" },
     });
+    revalidatePath("/", "layout");
     redirect(homeForRole(user.role));
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;

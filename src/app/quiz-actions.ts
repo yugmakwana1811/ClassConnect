@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { quizSchema } from "@/lib/validation";
@@ -10,6 +11,10 @@ function value(form: FormData, key: string) {
 }
 function fail(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
+}
+function revalidateQuizWorkspaces() {
+  revalidatePath("/teacher", "layout");
+  revalidatePath("/student", "layout");
 }
 
 export async function createQuizAction(form: FormData) {
@@ -69,6 +74,7 @@ export async function createQuizAction(form: FormData) {
     });
     return created;
   });
+  revalidateQuizWorkspaces();
   redirect(`/teacher/quizzes/${quiz.id}?success=Quiz saved`);
 }
 
@@ -100,6 +106,7 @@ export async function publishQuizAction(form: FormData) {
       },
     }),
   ]);
+  revalidateQuizWorkspaces();
   redirect(`/teacher/quizzes/${id}?success=Quiz published`);
 }
 
@@ -132,5 +139,6 @@ export async function deleteQuizAction(form: FormData) {
       },
     }),
   ]);
+  revalidateQuizWorkspaces();
   redirect("/teacher/quizzes?success=Quiz draft deleted");
 }

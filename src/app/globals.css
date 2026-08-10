@@ -2112,19 +2112,6 @@ tbody tr:last-child td {
 
 .route-motion {
   min-width: 0;
-  animation: route-motion-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes route-motion-enter {
-  from {
-    opacity: 0;
-    transform: translateY(7px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* Teacher class cards */
@@ -2262,6 +2249,177 @@ tbody tr:last-child td {
 
   .class-card-rename .btn {
     width: 100%;
+  }
+}
+
+/* Instant workspace navigation ------------------------------------------------ */
+.navigation-progress {
+  position: fixed;
+  z-index: 1200;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--indigo), var(--teal));
+}
+
+.navigation-progress[data-active="true"] {
+  opacity: 1;
+  transform: scaleX(0.82);
+  transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link[data-navigation-pending="true"] {
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.workspace-loading-shell {
+  min-height: min(720px, calc(100vh - 88px));
+}
+
+.workspace-loading-head h1 {
+  margin: 0.3rem 0 0.5rem;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.02;
+}
+
+.workspace-loading-head p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.workspace-loading-action,
+.workspace-loading-metrics > span,
+.workspace-loading-line {
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--surface-subtle) 96%, white) 8%,
+    color-mix(in srgb, var(--indigo-soft) 58%, white) 36%,
+    color-mix(in srgb, var(--surface-subtle) 96%, white) 64%
+  );
+  background-size: 240% 100%;
+  animation: workspace-shell-shimmer 1.6s ease-in-out infinite;
+}
+
+.workspace-loading-action {
+  width: 148px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+.workspace-loading-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.workspace-loading-metrics > span {
+  min-height: 116px;
+  border-radius: 18px;
+}
+
+.workspace-loading-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+  gap: 1rem;
+}
+
+.workspace-loading-content .card {
+  min-height: 260px;
+  padding: 1.2rem;
+}
+
+.workspace-loading-line {
+  width: 88%;
+  height: 14px;
+  margin-bottom: 0.85rem;
+  border-radius: 999px;
+}
+
+.workspace-loading-line-title {
+  width: 52%;
+  height: 24px;
+  margin-bottom: 1.4rem;
+}
+
+.workspace-loading-line-short {
+  width: 64%;
+}
+
+.workspace-error {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+  max-width: 760px;
+}
+
+.workspace-error h1 {
+  margin: 0.25rem 0 0.55rem;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+}
+
+.workspace-error p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.workspace-error-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--coral);
+  background: var(--coral-soft);
+}
+
+@keyframes workspace-shell-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspace-loading-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workspace-loading-metrics > span:last-child {
+    display: none;
+  }
+
+  .workspace-loading-content {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-loading-content .card:last-child {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation-progress[data-active="true"] {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  .workspace-loading-action,
+  .workspace-loading-metrics > span,
+  .workspace-loading-line {
+    animation: none;
   }
 }
 

@@ -27,7 +27,12 @@ export default async function TeacherClasses({
   const user = await requireUser("TEACHER");
   const classes = await db.classRoom.findMany({
     where: { teacherId: user.teacherProfile!.id },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      grade: true,
+      subject: true,
+      code: true,
       _count: {
         select: {
           enrollments: true,

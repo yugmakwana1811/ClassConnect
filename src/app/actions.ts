@@ -56,6 +56,12 @@ function text(form: FormData, key: string) {
 function fail(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
+function revalidateTeacherWorkspace() {
+  revalidatePath("/teacher", "layout");
+}
+function revalidateStudentWorkspace() {
+  revalidatePath("/student", "layout");
+}
 async function uniqueClassCode() {
   let code = "";
   do {
@@ -109,11 +115,13 @@ export async function loginAction(form: FormData) {
       error instanceof Error ? error.message : "Unknown error",
     );
   }
+  revalidatePath("/", "layout");
   redirect(homeForRole(user.role));
 }
 
 export async function logoutAction() {
   await destroySession();
+  revalidatePath("/", "layout");
   redirect("/login");
 }
 
@@ -142,6 +150,7 @@ export async function createClassAction(form: FormData) {
       entityId: classroom.id,
     },
   });
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${classroom.id}?success=Class created`);
 }
 
@@ -175,6 +184,7 @@ export async function updateClassAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${id}?success=Class updated`);
 }
 
@@ -203,6 +213,7 @@ export async function renameClassAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
   redirect("/teacher/classes?success=Class renamed");
 }
 
@@ -280,6 +291,7 @@ export async function deleteClassAction(form: FormData) {
       `[ClassConnect] ${failedCleanup.length} stored class file(s) could not be removed after deleting class ${classroom.id}.`,
     );
 
+  revalidateTeacherWorkspace();
   redirect("/teacher/classes?success=Class permanently deleted");
 }
 
@@ -303,6 +315,7 @@ export async function regenerateClassCodeAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${id}?success=New class code generated`);
 }
 
@@ -330,6 +343,7 @@ export async function removeEnrollmentAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${classId}?success=Student removed from class`);
 }
 
@@ -364,6 +378,8 @@ export async function joinClassAction(form: FormData) {
       entityId: classroom.id,
     },
   });
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   redirect(`/student/classes/${classroom.id}?success=You joined the class`);
 }
 
@@ -453,6 +469,7 @@ export async function createAssignmentAction(form: FormData) {
       userFacingMessage(error, "The assignment could not be saved. Try again."),
     );
   }
+  revalidateTeacherWorkspace();
   redirect(`/teacher/assignments/${assignmentId}?success=Assignment saved`);
 }
 
@@ -482,6 +499,8 @@ export async function publishAssignmentAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(`/teacher/assignments/${id}?success=Assignment published`);
 }
 
@@ -549,6 +568,8 @@ export async function updateAssignmentAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(`/teacher/assignments/${id}?success=Assignment updated`);
 }
 
@@ -579,6 +600,8 @@ export async function closeAssignmentAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(`/teacher/assignments/${id}?success=Assignment closed`);
 }
 
@@ -629,6 +652,7 @@ export async function generateContentAction(form: FormData) {
       entityId: record.id,
     },
   });
+  revalidatePath(base);
   redirect(`${base}?generation=${record.id}`);
 }
 
@@ -682,6 +706,8 @@ export async function createAnnouncementAction(form: FormData) {
   });
   if (!owns) fail("/teacher/announcements", "Class not found.");
   await db.announcement.create({ data: { ...parsed.data, authorId: user.id } });
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/announcements?success=Announcement sent");
 }
 
@@ -704,6 +730,8 @@ export async function deleteAnnouncementAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/announcements?success=Announcement deleted");
 }
 
@@ -768,6 +796,8 @@ export async function uploadResourceAction(form: FormData) {
       userFacingMessage(error, "The resource could not be uploaded. Try again."),
     );
   }
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/resources?success=Resource uploaded");
 }
 
@@ -806,6 +836,8 @@ export async function deleteResourceAction(form: FormData) {
       error instanceof Error ? error.message : "Unknown error",
     );
   }
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/resources?success=Resource deleted");
 }
 
@@ -942,6 +974,8 @@ export async function submitWorkAction(form: FormData) {
       ),
     };
   }
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   return { ok: true as const };
 }
 
@@ -1050,6 +1084,8 @@ export async function saveReviewAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(
     `/teacher/review/${submission.id}?success=${parsed.data.publish ? "Result published" : "Review saved"}`,
   );
@@ -1098,6 +1134,8 @@ export async function markAttendanceAction(form: FormData) {
       }),
     ),
   );
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/attendance?success=Attendance saved");
 }
 
@@ -1155,5 +1193,7 @@ export async function submitQuizAction(form: FormData) {
       metadata: { score, max, lockdownViolations },
     },
   });
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   redirect(`/student/quizzes/${quiz.id}?attempt=${attempt.id}`);
 }

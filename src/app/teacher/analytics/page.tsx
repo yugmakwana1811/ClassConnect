@@ -21,22 +21,31 @@ export default async function TeacherAnalytics() {
     await Promise.all([
       db.assignment.findMany({
         where: { status: { not: "DRAFT" }, class: { teacherId } },
-        include: {
-          class: { include: { _count: { select: { enrollments: true } } } },
+        select: {
+          class: { select: { _count: { select: { enrollments: true } } } },
         },
       }),
       db.submission.findMany({
         where: { assignment: { class: { teacherId } } },
-        include: {
-          result: true,
-          assignment: true,
-          student: { include: { user: true } },
+        select: {
+          status: true,
+          result: { select: { marks: true, published: true } },
+          assignment: {
+            select: { maxMarks: true, topic: true, title: true },
+          },
+          student: { select: { id: true, user: { select: { name: true } } } },
         },
       }),
-      db.attendanceRecord.findMany({ where: { class: { teacherId } } }),
+      db.attendanceRecord.findMany({
+        where: { class: { teacherId } },
+        select: { status: true },
+      }),
       db.quizAttempt.findMany({
         where: { quiz: { class: { teacherId } } },
-        include: { quiz: { include: { questions: true } } },
+        select: {
+          score: true,
+          quiz: { select: { questions: { select: { marks: true } } } },
+        },
       }),
       db.aIContentGeneration.count({ where: { userId: user.id } }),
     ]);

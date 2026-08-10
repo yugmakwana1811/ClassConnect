@@ -24,15 +24,21 @@ import { MotionPageTransition } from "./motion-page-transition";
 import { logoutAction } from "@/app/actions";
 import { initials } from "@/lib/utils";
 import type { Role } from "@prisma/client";
+import { NavigationFeedbackProvider } from "./navigation-feedback";
 
-type LinkItem = { href: string; label: string; icon: LucideIcon };
+type LinkItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  eager?: boolean;
+};
 type LinkGroup = { label: string; items: LinkItem[] };
 const teacherGroups: LinkGroup[] = [
   {
     label: "Workspace",
     items: [
       { href: "/teacher", label: "Overview", icon: Home },
-      { href: "/teacher/classes", label: "Classes", icon: Users },
+      { href: "/teacher/classes", label: "Classes", icon: Users, eager: true },
     ],
   },
   {
@@ -45,9 +51,19 @@ const teacherGroups: LinkGroup[] = [
   {
     label: "Assess",
     items: [
-      { href: "/teacher/assignments", label: "Assignments", icon: FileText },
+      {
+        href: "/teacher/assignments",
+        label: "Assignments",
+        icon: FileText,
+        eager: true,
+      },
       { href: "/teacher/quizzes", label: "Quizzes", icon: FileQuestion },
-      { href: "/teacher/review", label: "Review work", icon: ClipboardCheck },
+      {
+        href: "/teacher/review",
+        label: "Review work",
+        icon: ClipboardCheck,
+        eager: true,
+      },
     ],
   },
   {
@@ -74,9 +90,24 @@ const studentGroups: LinkGroup[] = [
   {
     label: "Learning",
     items: [
-      { href: "/student/assignments", label: "Assignments", icon: FileText },
-      { href: "/student/quizzes", label: "Quizzes", icon: BookOpen },
-      { href: "/student/results", label: "Results", icon: ClipboardCheck },
+      {
+        href: "/student/assignments",
+        label: "Assignments",
+        icon: FileText,
+        eager: true,
+      },
+      {
+        href: "/student/quizzes",
+        label: "Quizzes",
+        icon: BookOpen,
+        eager: true,
+      },
+      {
+        href: "/student/results",
+        label: "Results",
+        icon: ClipboardCheck,
+        eager: true,
+      },
     ],
   },
   {
@@ -96,6 +127,7 @@ const parentGroups: LinkGroup[] = [
         href: "/parent/students",
         label: "My children",
         icon: HeartHandshake,
+        eager: true,
       },
     ],
   },
@@ -124,90 +156,97 @@ export function AppShell({
   const links = groups.flatMap((group) => group.items);
   const mobile = links.slice(0, 4);
   return (
-    <div className="shell">
-      <a className="skip-link" href="#main-content">
-        Skip to main content
-      </a>
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <Logo />
-          <span className="workspace-chip">
-            {roleLabel(user.role)} workspace
-          </span>
-        </div>
-        <nav aria-label="Workspace navigation">
-          {groups.map((group) => (
-            <div className="nav-group" key={group.label}>
-              <div className="nav-group-label">{group.label}</div>
-              {group.items.map(({ href, label, icon: Icon }) => (
-                <AppNavLink
-                  href={href}
-                  label={label}
-                  icon={<Icon size={18} />}
-                  key={href}
-                />
-              ))}
+    <NavigationFeedbackProvider>
+      <div className="shell">
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
+        <aside className="sidebar">
+          <div className="sidebar-brand">
+            <Logo />
+            <span className="workspace-chip">
+              {roleLabel(user.role)} workspace
+            </span>
+          </div>
+          <nav aria-label="Workspace navigation">
+            {groups.map((group) => (
+              <div className="nav-group" key={group.label}>
+                <div className="nav-group-label">{group.label}</div>
+                {group.items.map(({ href, label, icon: Icon, eager }) => (
+                  <AppNavLink
+                    href={href}
+                    label={label}
+                    icon={<Icon size={18} />}
+                    eager={eager}
+                    key={href}
+                  />
+                ))}
+              </div>
+            ))}
+          </nav>
+          <div className="sidebar-account">
+            <span className="avatar">{initials(user.name)}</span>
+            <div className="account-copy">
+              <strong>{user.name}</strong>
+              <Link href="/account">
+                <Settings size={11} /> Account settings
+              </Link>
             </div>
+            <form action={logoutAction}>
+              <FloatingTooltip content="Sign out" placement="right">
+                <button
+                  aria-label="Sign out"
+                  className="icon-button icon-button-dark"
+                >
+                  <LogOut size={17} />
+                </button>
+              </FloatingTooltip>
+            </form>
+          </div>
+        </aside>
+        <main className="shell-main" id="main-content">
+          <header className="topbar">
+            <span className="topbar-role">
+              {roleLabel(user.role)} workspace
+            </span>
+            <div className="topbar-greeting">
+              <strong>
+                Good{" "}
+                {new Date().getHours() < 12
+                  ? "morning"
+                  : new Date().getHours() < 17
+                    ? "afternoon"
+                    : "evening"}
+                , {user.name.split(" ")[0]}
+              </strong>
+              <div className="hint hide-mobile">
+                Connecting the classroom beyond the classroom.
+              </div>
+            </div>
+            <div className="topbar-actions">
+              <span className="secure-status">
+                <span aria-hidden="true" />
+                Protected workspace
+              </span>
+              <Link href="/about" className="topbar-link">
+                Help & about
+              </Link>
+            </div>
+          </header>
+          <MotionPageTransition>{children}</MotionPageTransition>
+        </main>
+        <nav className="mobile-nav">
+          {mobile.map(({ href, label, icon: Icon, eager }) => (
+            <AppNavLink
+              href={href}
+              label={label}
+              icon={<Icon size={18} />}
+              eager={eager}
+              key={href}
+            />
           ))}
         </nav>
-        <div className="sidebar-account">
-          <span className="avatar">{initials(user.name)}</span>
-          <div className="account-copy">
-            <strong>{user.name}</strong>
-            <Link href="/account" prefetch={false}>
-              <Settings size={11} /> Account settings
-            </Link>
-          </div>
-          <form action={logoutAction}>
-            <FloatingTooltip content="Sign out" placement="right">
-              <button aria-label="Sign out" className="icon-button icon-button-dark">
-                <LogOut size={17} />
-              </button>
-            </FloatingTooltip>
-          </form>
-        </div>
-      </aside>
-      <main className="shell-main" id="main-content">
-        <header className="topbar">
-          <span className="topbar-role">
-            {roleLabel(user.role)} workspace
-          </span>
-          <div className="topbar-greeting">
-            <strong>
-              Good{" "}
-              {new Date().getHours() < 12
-                ? "morning"
-                : new Date().getHours() < 17
-                  ? "afternoon"
-                  : "evening"}
-              , {user.name.split(" ")[0]}
-            </strong>
-            <div className="hint hide-mobile">
-              Connecting the classroom beyond the classroom.
-            </div>
-          </div>
-          <div className="topbar-actions">
-            <span className="secure-status">
-              <span aria-hidden="true" />
-              Protected workspace
-            </span>
-            <Link href="/about" prefetch={false} className="topbar-link">
-              Help & about
-            </Link>
-          </div>
-        </header>
-        <MotionPageTransition>{children}</MotionPageTransition>
-      </main>
-      <nav className="mobile-nav">
-        {mobile.map(({ href, label, icon: Icon }) => (
-          <AppNavLink
-            href={href}
-            label={label}
-            icon={<Icon size={18} />}
-            key={href}
-          />
-        ))}
-      </nav>
-    </div>
+      </div>
+    </NavigationFeedbackProvider>
   );
 }

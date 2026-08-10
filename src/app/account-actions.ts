@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { createSession, requireUser } from "@/lib/auth";
 import {
@@ -65,6 +66,7 @@ export async function updateAccountAction(form: FormData) {
       data: { userId: user.id, action: "Updated profile", entityType: "User" },
     });
   });
+  revalidatePath("/", "layout");
   redirect("/account?success=Profile updated");
 }
 
@@ -141,6 +143,7 @@ export async function changeEmailAction(form: FormData) {
   }
 
   await createSession(user.id);
+  revalidatePath("/", "layout");
   redirect(
     "/account/email?success=Email changed and other sessions signed out",
   );
@@ -177,6 +180,7 @@ export async function changePasswordAction(form: FormData) {
     }),
   ]);
   await createSession(user.id);
+  revalidatePath("/", "layout");
   redirect(
     "/account/password?success=Password changed and other sessions signed out",
   );

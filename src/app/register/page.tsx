@@ -15,7 +15,7 @@ export default async function RegisterPage({
       <section className="auth-main">
         <div className="auth-main-bar">
           <Logo />
-          <Link href="/login" prefetch={false} className="auth-back-link">
+          <Link href="/login" className="auth-back-link">
             <ArrowLeft size={15} /> Sign in
           </Link>
         </div>
@@ -35,7 +35,6 @@ export default async function RegisterPage({
             Already have an account?{" "}
             <Link
               href="/login"
-              prefetch={false}
               style={{ color: "var(--teal)", fontWeight: 800 }}
             >
               Sign in

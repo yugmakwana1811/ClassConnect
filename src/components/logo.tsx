@@ -4,7 +4,6 @@ export function Logo({ light = false }: { light?: boolean }) {
   return (
     <Link
       href="/"
-      prefetch={false}
       className={`brand-logo${light ? " brand-logo-light" : ""}`}
     >
       <span className="brand-mark">

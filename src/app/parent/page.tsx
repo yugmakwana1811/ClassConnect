@@ -202,7 +202,7 @@ export default async function ParentDashboard() {
         title="Your family learning dashboard"
         description="Follow marks, attendance, learning activity, and AI Studio questions from one private workspace."
         action={
-          <Link className="btn btn-primary" href="/parent/students" prefetch={false}>
+          <Link className="btn btn-primary" href="/parent/students">
             <HeartHandshake size={17} /> Manage children
           </Link>
         }
@@ -290,7 +290,6 @@ export default async function ParentDashboard() {
               )}
               <Link
                 href={`/parent/students/${card.student.id}`}
-                prefetch={false}
                 style={{
                   color: "var(--indigo)",
                   fontWeight: 850,
@@ -310,7 +309,7 @@ export default async function ParentDashboard() {
           title="Connect a student to begin"
           description="Ask the student for their sign-in email and private parent access code, then create a secure family connection."
           action={
-            <Link className="btn btn-primary" href="/parent/students" prefetch={false}>
+            <Link className="btn btn-primary" href="/parent/students">
               Connect a student
             </Link>
           }

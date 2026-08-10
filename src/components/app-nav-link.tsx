@@ -22,6 +22,12 @@ export function AppNavLink({
     <Link
       className="nav-link"
       href={href}
+      // Dashboard pages are data-heavy server components. Eagerly
+      // prefetching every nav destination makes the browser request and
+      // render all of them just because they are visible in the sidebar.
+      // Navigate on demand so the active page stays responsive and the
+      // server does not do work the user may never request.
+      prefetch={false}
       aria-label={label}
       aria-current={active ? "page" : undefined}
     >

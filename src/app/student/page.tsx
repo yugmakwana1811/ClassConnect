@@ -233,7 +233,7 @@ export default async function StudentDashboard() {
         title="Learn with a clear next step"
         description="See what is due, submit work with confidence, and use teacher-published feedback to guide revision."
         action={
-          <Link className="btn btn-primary" href="/student/ai-help">
+          <Link className="btn btn-primary" href="/student/ai-help" prefetch={false}>
             <Sparkles size={16} /> Ask study assistant
           </Link>
         }
@@ -298,6 +298,7 @@ export default async function StudentDashboard() {
               <Link
                 key={assignment.id}
                 href={`/student/assignments/${assignment.id}`}
+                prefetch={false}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -338,6 +339,7 @@ export default async function StudentDashboard() {
           )}
           <Link
             href="/student/assignments"
+            prefetch={false}
               style={{
                 display: "inline-flex",
                 gap: 5,
@@ -366,6 +368,7 @@ export default async function StudentDashboard() {
             </p>
             <Link
               href="/student/ai-help"
+              prefetch={false}
               style={{
                 color: "var(--indigo)",
                 fontWeight: 800,

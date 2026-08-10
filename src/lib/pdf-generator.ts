@@ -137,7 +137,7 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
 
 function addPage(state: DrawState) {
   const page = state.pdf.addPage([A4.width, A4.height]);
-  page.drawText("EDUGRADE", {
+  page.drawText("CLASSCONNECT", {
     x: MARGIN_X,
     y: A4.height - 35,
     size: 9,
@@ -343,9 +343,9 @@ export async function generateAcademicPdf(document: AcademicPdfDocument) {
     bold: await pdf.embedFont(bytes.bold, { subset: true }),
   };
   pdf.setTitle(normalizePdfText(document.title));
-  pdf.setAuthor("EduGrade");
+  pdf.setAuthor("ClassConnect");
   pdf.setSubject(normalizePdfText(`${document.documentType} - ${document.subject}`));
-  pdf.setCreator("EduGrade protected PDF service");
+  pdf.setCreator("ClassConnect protected PDF service");
 
   const state = {
     pdf,
@@ -365,7 +365,7 @@ export async function generateAcademicPdf(document: AcademicPdfDocument) {
     height: 36,
     color: TEAL,
   });
-  state.page.drawText("EDUGRADE", {
+  state.page.drawText("CLASSCONNECT", {
     x: MARGIN_X + 18,
     y: state.y - 13,
     size: 11,

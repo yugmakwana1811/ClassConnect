@@ -161,7 +161,7 @@ export default async function AITools({
               <Sparkles size={16} /> Generate editable draft
             </AIStreamSubmitButton>
             <p className="hint" style={{ margin: 0 }}>
-              EduGrade securely prepares a subject-aware draft for review.
+              ClassConnect securely prepares a subject-aware draft for review.
             </p>
           </AIStreamingForm>
           <div

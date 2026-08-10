@@ -1,6 +1,6 @@
-# EduGrade AI deployment
+# ClassConnect deployment
 
-EduGrade AI is a Next.js 16 application designed for Node.js 24, PostgreSQL, and private object storage. The production deployment currently uses Vercel, Neon Postgres, and private Vercel Blob storage.
+ClassConnect is a Next.js 16 application designed for Node.js 24, PostgreSQL, and private object storage. The production deployment currently uses Vercel, Neon Postgres, and private Vercel Blob storage.
 
 ## Required environment variables
 

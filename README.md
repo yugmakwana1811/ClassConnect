@@ -1,6 +1,6 @@
-# EduGrade AI
+# ClassConnect
 
-EduGrade AI is a Next.js 16 classroom workspace for teachers, students, and parents. It combines class and assignment management, private answer-page review, quizzes, attendance, role-scoped learning analytics, parent progress visibility, and server-streamed AI teaching support.
+ClassConnect is a Next.js 16 classroom workspace for teachers, students, and parents. Its punch line is: “Connecting the classroom beyond the classroom.” It combines class and assignment management, private answer-page review, quizzes, attendance, role-scoped learning analytics, parent progress visibility, and server-streamed AI teaching support.
 
 ## Local setup
 

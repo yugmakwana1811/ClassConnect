@@ -1,4 +1,4 @@
-# EduGrade AI production scope
+# ClassConnect production scope
 
 ## Implemented
 

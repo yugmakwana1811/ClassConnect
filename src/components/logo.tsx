@@ -11,7 +11,7 @@ export function Logo({ light = false }: { light?: boolean }) {
         <Sparkles size={19} />
       </span>
       <span className="brand-wordmark">
-        EduGrade <em>AI</em>
+        ClassConnect
       </span>
     </Link>
   );

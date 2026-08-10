@@ -183,7 +183,7 @@ export function AppShell({
               , {user.name.split(" ")[0]}
             </strong>
             <div className="hint hide-mobile">
-              Smart Teaching. Faster Feedback. Better Learning.
+              Connecting the classroom beyond the classroom.
             </div>
           </div>
           <div className="topbar-actions">

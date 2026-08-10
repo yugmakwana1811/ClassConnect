@@ -21,7 +21,7 @@ export default async function RegisterPage({
         </div>
         <div className="auth-form-wrap auth-form-wrap-wide">
           <div className="eyebrow">Create account</div>
-          <h1 className="display auth-title">Build your EduGrade workspace</h1>
+          <h1 className="display auth-title">Build your ClassConnect workspace</h1>
           <p className="auth-description">
             Choose your role carefully. It controls which classroom data and
             actions your account can access.

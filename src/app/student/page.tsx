@@ -364,7 +364,7 @@ export default async function StudentDashboard() {
             <p style={{ color: "var(--muted)", lineHeight: 1.6 }}>
               {weakTopic
                 ? `Your published results currently average ${weakTopic.average}% for this topic. Redo one example without notes, compare it with feedback, then explain the corrected step aloud.`
-                : "Complete assigned work and quizzes. Once results are published, EduGrade will identify topics worth revisiting without making final learning decisions for you."}
+                : "Complete assigned work and quizzes. Once results are published, ClassConnect will identify topics worth revisiting without making final learning decisions for you."}
             </p>
             <Link
               href="/student/ai-help"

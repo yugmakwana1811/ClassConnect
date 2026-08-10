@@ -91,7 +91,7 @@ export async function loginAction(form: FormData) {
     if (error instanceof Error && error.message.startsWith("Too many attempts"))
       fail("/login", error.message);
     console.error(
-      "[EduGrade] Login service failure",
+      "[ClassConnect] Login service failure",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail(
@@ -105,7 +105,7 @@ export async function loginAction(form: FormData) {
     });
   } catch (error) {
     console.error(
-      "[EduGrade] Sign-in activity logging failed",
+      "[ClassConnect] Sign-in activity logging failed",
       error instanceof Error ? error.message : "Unknown error",
     );
   }
@@ -277,7 +277,7 @@ export async function deleteClassAction(form: FormData) {
   );
   if (failedCleanup.length)
     console.error(
-      `[EduGrade] ${failedCleanup.length} stored class file(s) could not be removed after deleting class ${classroom.id}.`,
+      `[ClassConnect] ${failedCleanup.length} stored class file(s) could not be removed after deleting class ${classroom.id}.`,
     );
 
   redirect("/teacher/classes?success=Class permanently deleted");
@@ -440,12 +440,12 @@ export async function createAssignmentAction(form: FormData) {
         await deleteStoredFile(storedUrl);
       } catch (cleanupError) {
         console.error(
-          "[EduGrade] Failed to clean up an incomplete assignment upload",
+          "[ClassConnect] Failed to clean up an incomplete assignment upload",
           cleanupError instanceof Error ? cleanupError.message : "Unknown error",
         );
       }
     console.error(
-      "[EduGrade] Assignment creation failed",
+      "[ClassConnect] Assignment creation failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail(
@@ -755,12 +755,12 @@ export async function uploadResourceAction(form: FormData) {
         await deleteStoredFile(storedUrl);
       } catch (cleanupError) {
         console.error(
-          "[EduGrade] Failed to clean up an incomplete resource upload",
+          "[ClassConnect] Failed to clean up an incomplete resource upload",
           cleanupError instanceof Error ? cleanupError.message : "Unknown error",
         );
       }
     console.error(
-      "[EduGrade] Resource upload failed",
+      "[ClassConnect] Resource upload failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail(
@@ -793,7 +793,7 @@ export async function deleteResourceAction(form: FormData) {
     ]);
   } catch (error) {
     console.error(
-      "[EduGrade] Resource deletion failed",
+      "[ClassConnect] Resource deletion failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail("/teacher/resources", "The resource could not be deleted. Try again.");
@@ -802,7 +802,7 @@ export async function deleteResourceAction(form: FormData) {
     await deleteStoredFile(resource.url);
   } catch (error) {
     console.error(
-      `[EduGrade] Stored file could not be removed after deleting resource ${id}`,
+      `[ClassConnect] Stored file could not be removed after deleting resource ${id}`,
       error instanceof Error ? error.message : "Unknown error",
     );
   }
@@ -931,7 +931,7 @@ export async function submitWorkAction(form: FormData) {
     });
   } catch (error) {
     console.error(
-      "[EduGrade] Submission finalization failed",
+      "[ClassConnect] Submission finalization failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     return {

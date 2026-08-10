@@ -36,7 +36,7 @@ export default function GlobalError({
           className="display"
           style={{ fontSize: "2.5rem", margin: "1rem 0 .5rem" }}
         >
-          EduGrade couldn’t load this page.
+          ClassConnect couldn’t load this page.
         </h1>
         <p style={{ color: "var(--muted)", lineHeight: 1.6 }}>
           The request did not complete. Try again once; if it continues, return

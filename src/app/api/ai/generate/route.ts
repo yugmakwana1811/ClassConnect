@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         controller.close();
       } catch (error) {
         console.error(
-          "[EduGrade AI] Generation stream failed",
+          "[ClassConnect] Generation stream failed",
           error instanceof Error ? error.message : "Unknown generation error",
         );
         const streamError: StreamEvent = {

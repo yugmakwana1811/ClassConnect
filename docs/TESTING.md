@@ -1,4 +1,4 @@
-# Testing EduGrade AI
+# Testing ClassConnect
 
 Run the complete local gate with:
 

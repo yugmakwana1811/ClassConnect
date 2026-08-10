@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "EduGrade AI", template: "%s · EduGrade AI" },
-  description: "Smart Teaching. Faster Feedback. Better Learning.",
-  applicationName: "EduGrade AI",
+  title: { default: "ClassConnect", template: "%s · ClassConnect" },
+  description: "Connecting the classroom beyond the classroom.",
+  applicationName: "ClassConnect",
 };
 export default function RootLayout({
   children,

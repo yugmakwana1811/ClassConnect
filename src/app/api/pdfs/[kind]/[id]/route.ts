@@ -66,7 +66,7 @@ export async function GET(
         { status: error.status },
       );
     console.error(
-      "[EduGrade] Protected PDF generation failed",
+      "[ClassConnect] Protected PDF generation failed",
       error instanceof Error ? error.message : "Unknown PDF error",
     );
     return NextResponse.json(

@@ -428,7 +428,7 @@ async function reportPdf(id: string, viewer: PdfViewer) {
   ];
   const document: AcademicPdfDocument = {
     title: `${student.user.name} - Progress Report`,
-    subtitle: `${student.rollNumber ?? "Class 12 learner"} | Evidence from live EduGrade records`,
+    subtitle: `${student.rollNumber ?? "Class 12 learner"} | Evidence from live ClassConnect records`,
     documentType: "Student progress report",
     school: student.school ?? DEMO_SCHOOL,
     className: "Class 12 Commerce",

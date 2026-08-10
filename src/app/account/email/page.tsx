@@ -20,7 +20,7 @@ export default async function ChangeEmailPage({
       <PageHeader
         eyebrow="Account security"
         title="Change your sign-in email"
-        description="Use this dedicated dashboard to update the email address connected to your EduGrade account."
+        description="Use this dedicated dashboard to update the email address connected to your ClassConnect account."
         action={
           <Link href="/account" className="btn btn-secondary">
             <ArrowLeft size={16} /> Account settings

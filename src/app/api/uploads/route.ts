@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     console.error(
-      "[EduGrade] Client upload request failed",
+      "[ClassConnect] Client upload request failed",
       error instanceof Error ? error.message : "Unknown upload error",
     );
     return NextResponse.json(

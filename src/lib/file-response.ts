@@ -22,7 +22,7 @@ export async function storedFileResponse(
       });
     } catch (error) {
       console.error(
-        "[EduGrade] Local private file delivery failed",
+        "[ClassConnect] Local private file delivery failed",
         error instanceof Error ? error.message : "Unknown local storage error",
       );
       return NextResponse.json({ error: "File not found" }, { status: 404 });
@@ -53,7 +53,7 @@ export async function storedFileResponse(
     return new Response(blob.stream, { headers });
   } catch (error) {
     console.error(
-      "[EduGrade] Private file delivery failed",
+      "[ClassConnect] Private file delivery failed",
       error instanceof Error ? error.message : "Unknown storage error",
     );
     return NextResponse.json(

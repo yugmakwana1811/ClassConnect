@@ -15,7 +15,7 @@ export async function checkDatabaseConnection() {
     return { ok: true as const };
   } catch (error) {
     console.error(
-      "[EduGrade] Database health check failed",
+      "[ClassConnect] Database health check failed",
       error instanceof Error ? error.message : "Unknown database error",
     );
     return { ok: false as const };

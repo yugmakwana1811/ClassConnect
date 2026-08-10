@@ -55,7 +55,7 @@ export async function destroySession() {
     await db.session.deleteMany({ where: { tokenHash: hash(token) } });
   } catch (error) {
     console.error(
-      "[EduGrade] Session cleanup failed",
+      "[ClassConnect] Session cleanup failed",
       error instanceof Error ? error.message : "Unknown error",
     );
   }

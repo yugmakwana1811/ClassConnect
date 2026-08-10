@@ -37,7 +37,7 @@ export default async function AIHelp({
       <PageHeader
         eyebrow="AI learning support"
         title="Get a hint, not a shortcut"
-        description="Ask for an explanation or revision plan. EduGrade guides your thinking without completing assessed work for you."
+        description="Ask for an explanation or revision plan. ClassConnect guides your thinking without completing assessed work for you."
       />
       <Alert error={error} success={success} />
       <SafetyNote student />
@@ -100,7 +100,7 @@ export default async function AIHelp({
               <Sparkles size={16} /> Get learning support
             </AIStreamSubmitButton>
             <p className="hint" style={{ margin: 0 }}>
-              EduGrade prepares a subject-aware suggestion for you.
+              ClassConnect prepares a subject-aware suggestion for you.
             </p>
           </AIStreamingForm>
           <div

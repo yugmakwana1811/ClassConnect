@@ -105,7 +105,7 @@ export async function registerAction(form: FormData) {
     if (error instanceof Error && error.message.startsWith("Too many attempts"))
       fail(error.message);
     console.error(
-      "[EduGrade] Account registration failed",
+      "[ClassConnect] Account registration failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail("Account creation is temporarily unavailable. Please try again.");

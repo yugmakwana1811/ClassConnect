@@ -121,7 +121,7 @@ export default async function Login({
             </div>
           </details>
           <p className="hint auth-footnote">
-            New to EduGrade?{" "}
+            New to ClassConnect?{" "}
             <Link
               href="/register"
               prefetch={false}

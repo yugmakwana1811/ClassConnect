@@ -77,7 +77,7 @@ export async function POST(request: Request) {
         controller.close();
       } catch (error) {
         console.error(
-          "[EduGrade AI] Feedback stream failed",
+          "[ClassConnect] Feedback stream failed",
           error instanceof Error ? error.message : "Unknown feedback error",
         );
         const streamError: StreamEvent = {

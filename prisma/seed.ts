@@ -635,14 +635,14 @@ async function main() {
       db.submission.count({ where: { id: { startsWith: "demo-submission-" } } }),
     ]);
   console.log(
-    `EduGrade demo seeded: ${studentCount} students, ${assignmentCount} assessments, ${quizCount} quizzes, ${resourceCount} resources, ${submissionCount} submissions.`,
+    `ClassConnect demo seeded: ${studentCount} students, ${assignmentCount} assessments, ${quizCount} quizzes, ${resourceCount} resources, ${submissionCount} submissions.`,
   );
   console.log(`Demo teacher: ${teacher.email}. Shared demo password: ${DEMO_PASSWORD}`);
 }
 
 main()
   .catch((error) => {
-    console.error("EduGrade demo seed failed", error);
+    console.error("ClassConnect demo seed failed", error);
     process.exitCode = 1;
   })
   .finally(() => db.$disconnect());

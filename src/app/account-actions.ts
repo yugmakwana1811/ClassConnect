@@ -131,7 +131,7 @@ export async function changeEmailAction(form: FormData) {
     )
       fail("That email address is already in use.", returnPath);
     console.error(
-      "[EduGrade] Email change failed",
+      "[ClassConnect] Email change failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail(

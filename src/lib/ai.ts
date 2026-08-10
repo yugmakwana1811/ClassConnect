@@ -75,7 +75,7 @@ export async function generateAI(
       };
     } catch (error) {
       console.warn(
-        `[EduGrade AI] OpenRouter model ${model.id} failed:`,
+        `[ClassConnect] OpenRouter model ${model.id} failed:`,
         error instanceof Error ? error.message : "Unknown provider error",
       );
       if (error instanceof OpenRouterError && error.stopFailover) break;
@@ -83,7 +83,7 @@ export async function generateAI(
   }
 
   console.error(
-    "[EduGrade AI] All permitted OpenRouter models failed; using safe fallback.",
+    "[ClassConnect] All permitted OpenRouter models failed; using safe fallback.",
   );
   return { content: fallback(input), provider: "deterministic-fallback" };
 }
@@ -133,7 +133,7 @@ export async function createAIStream(input: GenerateInput): Promise<AIStream> {
         return;
       } catch (error) {
         console.warn(
-          `[EduGrade AI] Streaming OpenRouter model ${model.id} failed:`,
+          `[ClassConnect] Streaming OpenRouter model ${model.id} failed:`,
           error instanceof Error ? error.message : "Unknown provider error",
         );
         // Once content has reached the user, silently switching models would
@@ -144,7 +144,7 @@ export async function createAIStream(input: GenerateInput): Promise<AIStream> {
     }
 
     console.error(
-      "[EduGrade AI] All permitted streaming models failed; using safe fallback.",
+      "[ClassConnect] All permitted streaming models failed; using safe fallback.",
     );
     for (const chunk of chunkText(fallback(input))) {
       yield chunk;
@@ -192,7 +192,7 @@ async function requestOpenRouter(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "X-OpenRouter-Title": "EduGrade AI",
+      "X-OpenRouter-Title": "ClassConnect",
     },
     body: JSON.stringify({
       // The route is selected from a server-owned allowlist. Browser input
@@ -206,7 +206,7 @@ async function requestOpenRouter(
       ...(model.reasoning ? { reasoning: model.reasoning } : {}),
       provider: {
         // Nitro prioritizes the highest-throughput healthy provider while
-        // requiring support for every parameter sent by EduGrade.
+        // requiring support for every parameter sent by ClassConnect.
         sort: "throughput",
         require_parameters: true,
       },
@@ -244,7 +244,7 @@ async function* requestOpenRouterStream(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "X-OpenRouter-Title": "EduGrade AI",
+      "X-OpenRouter-Title": "ClassConnect",
     },
     body: JSON.stringify({
       model: model.id,

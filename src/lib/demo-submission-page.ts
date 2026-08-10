@@ -61,7 +61,7 @@ export function renderDemoSubmissionPage(input: {
   <rect width="900" height="1200" fill="#fffef9"/>
   <rect x="42" y="42" width="816" height="1116" rx="8" fill="none" stroke="#9fb4c8" stroke-width="2"/>
   <rect x="42" y="42" width="816" height="92" rx="8" fill="#10263f"/>
-  <text x="84" y="98" font-family="Arial, sans-serif" font-size="29" font-weight="700" letter-spacing="2" fill="#ffffff">EDUGRADE ANSWER SHEET</text>
+  <text x="84" y="98" font-family="Arial, sans-serif" font-size="29" font-weight="700" letter-spacing="2" fill="#ffffff">CLASSCONNECT ANSWER SHEET</text>
   <text x="720" y="98" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#9fe4dd">PAGE ${input.pageNumber}</text>
   <text x="84" y="182" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#10263f">${escapeXml(input.studentName)}</text>
   <text x="84" y="216" font-family="Arial, sans-serif" font-size="16" fill="#566579">Roll ${escapeXml(input.rollNumber || "-")} | ${escapeXml(input.subject)}</text>

@@ -12,6 +12,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { topicPerformance } from "@/lib/analytics";
 import { PageHeader, StatCard } from "@/components/ui";
+import { StudentProgressGraph } from "@/components/student-progress-graph";
 
 export default async function TeacherAnalytics() {
   const user = await requireUser("TEACHER");
@@ -178,6 +179,7 @@ export default async function TeacherAnalytics() {
           tone="gold"
         />
       </div>
+      <StudentProgressGraph />
       <div
         style={{
           display: "grid",

@@ -23,7 +23,7 @@ export default async function Login({
       <section className="auth-main">
         <div className="auth-main-bar">
           <Logo />
-          <Link href="/" className="auth-back-link">
+          <Link href="/" prefetch={false} className="auth-back-link">
             <ArrowLeft size={16} /> Home
           </Link>
         </div>
@@ -124,6 +124,7 @@ export default async function Login({
             New to EduGrade?{" "}
             <Link
               href="/register"
+              prefetch={false}
               style={{ color: "var(--teal)", fontWeight: 800 }}
             >
               Create a teacher, student, or parent account

@@ -40,5 +40,22 @@ describe("runtime configuration", () => {
         NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: Buffer.alloc(32).toString("base64"),
       }).ready,
     ).toBe(true);
+    expect(
+      productionConfiguration({
+        NODE_ENV: "production",
+        VERCEL: "1",
+        AUTH_SECRET: "a".repeat(32),
+        BLOB_STORE_ID: "store_example",
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: Buffer.alloc(32).toString("base64"),
+      }).ready,
+    ).toBe(true);
+    expect(
+      productionConfiguration({
+        NODE_ENV: "production",
+        AUTH_SECRET: "a".repeat(32),
+        BLOB_STORE_ID: "store_example",
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: Buffer.alloc(32).toString("base64"),
+      }).ready,
+    ).toBe(false);
   });
 });

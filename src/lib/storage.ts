@@ -16,6 +16,18 @@ const ALLOWED = new Set([
   "text/plain",
 ]);
 
+function blobCredentialsAvailable() {
+  return Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN?.trim() ||
+      (process.env.VERCEL === "1" && process.env.BLOB_STORE_ID?.trim()),
+  );
+}
+
+function blobTokenOption() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  return token ? { token } : {};
+}
+
 export function validateFile(file: File, imageOnly = false) {
   if (!file.size) throw new UserFacingError("The selected file is empty.");
   if (file.size > MAX_SERVER_UPLOAD_SIZE)
@@ -32,11 +44,9 @@ export async function verifyPrivateUpload(
   expectedPrefix: string,
   imageOnly = false,
 ) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN)
+  if (!blobCredentialsAvailable())
     throw new UserFacingError("File storage is not configured.");
-  const metadata = await head(url, {
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  });
+  const metadata = await head(url, blobTokenOption());
   if (!metadata.pathname.startsWith(expectedPrefix))
     throw new UserFacingError(
       "The uploaded file does not belong to this assignment.",
@@ -56,17 +66,17 @@ export async function verifyPrivateUpload(
 export async function storeFile(file: File, folder: string) {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const filename = `${folder}/${randomUUID()}-${safeName}`;
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (blobCredentialsAvailable()) {
     const blob = await put(filename, file, {
       access: "private",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      ...blobTokenOption(),
       addRandomSuffix: false,
     });
     return blob.url;
   }
   if (process.env.NODE_ENV === "production")
     throw new UserFacingError(
-      "File storage is not configured. Set BLOB_READ_WRITE_TOKEN.",
+      "File storage is not configured. Connect a private Vercel Blob store.",
     );
   const dir = path.join(process.cwd(), ".data", "uploads", folder);
   await mkdir(dir, { recursive: true });
@@ -87,9 +97,9 @@ export async function deleteStoredFile(url: string) {
     return;
   }
   if (!url.startsWith("https://")) return;
-  if (!process.env.BLOB_READ_WRITE_TOKEN)
+  if (!blobCredentialsAvailable())
     throw new UserFacingError("File storage is not configured.");
-  await del(url, { token: process.env.BLOB_READ_WRITE_TOKEN });
+  await del(url, blobTokenOption());
 }
 
 export async function readLocalPrivateFile(url: string) {

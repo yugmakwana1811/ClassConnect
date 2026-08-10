@@ -28,7 +28,11 @@ export async function storedFileResponse(
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
   }
-  if (!process.env.BLOB_READ_WRITE_TOKEN)
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  const blobConfigured = Boolean(
+    blobToken || (process.env.VERCEL === "1" && process.env.BLOB_STORE_ID?.trim()),
+  );
+  if (!blobConfigured)
     return NextResponse.json(
       { error: "Private storage is not configured" },
       { status: 503 },
@@ -36,7 +40,7 @@ export async function storedFileResponse(
   try {
     const blob = await get(url, {
       access: "private",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      ...(blobToken ? { token: blobToken } : {}),
     });
     if (!blob?.stream)
       return NextResponse.json({ error: "File not found" }, { status: 404 });

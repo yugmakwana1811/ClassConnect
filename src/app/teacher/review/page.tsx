@@ -2,6 +2,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
   Clock3,
   FileQuestion,
   Inbox,
@@ -9,6 +11,7 @@ import {
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { EmptyState, PageHeader, StatCard } from "@/components/ui";
+import { groupReviewItemsByAssignment } from "@/lib/review-groups";
 import { formatDateTime } from "@/lib/utils";
 export default async function ReviewQueue() {
   const user = await requireUser("TEACHER");
@@ -44,6 +47,10 @@ export default async function ReviewQueue() {
   const checked = submissions.filter((s) =>
     ["REVIEWED", "PUBLISHED"].includes(s.status),
   ).length;
+  const assignmentGroups = groupReviewItemsByAssignment(submissions);
+  const firstPendingGroup = assignmentGroups.findIndex((group) =>
+    group.submissions.some((submission) => submission.status === "SUBMITTED"),
+  );
   return (
     <div className="page">
       <PageHeader
@@ -84,82 +91,142 @@ export default async function ReviewQueue() {
               </span>
             </div>
             {submissions.length ? (
-              <div className="card table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Student</th>
-                      <th>Work</th>
-                      <th>Files</th>
-                      <th>Submitted</th>
-                      <th>Status</th>
-                      <th>Score</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {submissions.map((s) => (
-                      <tr key={s.id}>
-                        <td>
-                          <Link
-                            href={`/teacher/students/${s.student.id}`}
-                            style={{ fontWeight: 800 }}
-                          >
-                            {s.student.user.name}
-                          </Link>
-                          <div className="hint">{s.student.rollNumber}</div>
-                        </td>
-                        <td>
-                          <strong>{s.assignment.title}</strong>
-                          <div className="hint">
-                            {s.assignment.type} · {s.assignment.class.name}
-                          </div>
-                        </td>
-                        <td>
-                          {s.pages.length} answer page
-                          {s.pages.length === 1 ? "" : "s"}
-                          {s.assignment.attachments.length ? (
-                            <div>
+              <div className="review-assignment-list">
+                {assignmentGroups.map((group, groupIndex) => {
+                  const assignment = group.submissions[0].assignment;
+                  const groupPending = group.submissions.filter(
+                    (submission) => submission.status === "SUBMITTED",
+                  ).length;
+                  const groupReviewed = group.submissions.length - groupPending;
+                  const shouldOpen =
+                    groupIndex ===
+                    (firstPendingGroup === -1 ? 0 : firstPendingGroup);
+
+                  return (
+                    <details
+                      className="review-assignment-group"
+                      key={group.assignmentId}
+                      open={shouldOpen}
+                    >
+                      <summary className="review-assignment-summary">
+                        <span className="review-assignment-icon" aria-hidden="true">
+                          <ClipboardCheck size={20} />
+                        </span>
+                        <span className="review-assignment-heading">
+                          <strong>{assignment.title}</strong>
+                          <span>
+                            {assignment.type} · {assignment.class.name}
+                          </span>
+                        </span>
+                        <span className="review-assignment-counts">
+                          <span className="badge badge-coral">
+                            {groupPending} pending
+                          </span>
+                          <span className="badge badge-teal">
+                            {groupReviewed} checked
+                          </span>
+                          <span className="badge">
+                            {group.submissions.length} submission
+                            {group.submissions.length === 1 ? "" : "s"}
+                          </span>
+                        </span>
+                        <ChevronDown
+                          className="review-assignment-chevron"
+                          size={20}
+                          aria-hidden="true"
+                        />
+                      </summary>
+
+                      <div className="review-assignment-body">
+                        <div className="review-assignment-actions">
+                          <span className="hint">
+                            Select a student to review their submitted work.
+                          </span>
+                          <div>
+                            {assignment.attachments.length ? (
                               <a
-                                className="hint"
-                                href={`/api/files/assignment/${s.assignment.attachments[0].id}`}
+                                className="btn btn-secondary"
+                                href={`/api/files/assignment/${assignment.attachments[0].id}`}
                                 target="_blank"
                                 rel="noreferrer"
                               >
                                 Open question file
                               </a>
-                            </div>
-                          ) : null}
-                        </td>
-                        <td>
-                          {s.submittedAt
-                            ? formatDateTime(s.submittedAt)
-                            : "—"}
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${s.status === "SUBMITTED" ? "badge-coral" : "badge-teal"}`}
-                          >
-                            {s.status.toLowerCase()}
-                          </span>
-                        </td>
-                        <td>
-                          {s.result
-                            ? `${Number(s.result.marks)}/${s.assignment.maxMarks}`
-                            : "—"}
-                        </td>
-                        <td>
-                          <Link
-                            href={`/teacher/review/${s.id}`}
-                            aria-label={`Review ${s.assignment.title} from ${s.student.user.name}`}
-                          >
-                            <ArrowRight size={17} />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            ) : null}
+                            <Link
+                              className="btn btn-secondary"
+                              href={`/teacher/assignments/${assignment.id}`}
+                            >
+                              Assignment details
+                            </Link>
+                          </div>
+                        </div>
+
+                        <div className="table-wrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Student</th>
+                                <th>Answer pages</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Score</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.submissions.map((submission) => (
+                                <tr key={submission.id}>
+                                  <td>
+                                    <Link
+                                      href={`/teacher/students/${submission.student.id}`}
+                                      style={{ fontWeight: 800 }}
+                                    >
+                                      {submission.student.user.name}
+                                    </Link>
+                                    <div className="hint">
+                                      {submission.student.rollNumber}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    {submission.pages.length} answer page
+                                    {submission.pages.length === 1 ? "" : "s"}
+                                  </td>
+                                  <td>
+                                    {submission.submittedAt
+                                      ? formatDateTime(submission.submittedAt)
+                                      : "—"}
+                                  </td>
+                                  <td>
+                                    <span
+                                      className={`badge ${submission.status === "SUBMITTED" ? "badge-coral" : "badge-teal"}`}
+                                    >
+                                      {submission.status.toLowerCase()}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    {submission.result
+                                      ? `${Number(submission.result.marks)}/${assignment.maxMarks}`
+                                      : "—"}
+                                  </td>
+                                  <td>
+                                    <Link
+                                      className="review-assignment-open"
+                                      href={`/teacher/review/${submission.id}`}
+                                      aria-label={`Review ${assignment.title} from ${submission.student.user.name}`}
+                                    >
+                                      <ArrowRight size={17} />
+                                    </Link>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </details>
+                  );
+                })}
               </div>
             ) : (
               <EmptyState

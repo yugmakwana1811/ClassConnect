@@ -7064,6 +7064,158 @@ a.card:active {
   transition-duration: 70ms;
 }
 
+/* Review Work assignment menus */
+.review-assignment-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.review-assignment-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--micro-fast) var(--micro-ease),
+    box-shadow var(--micro-fast) var(--micro-ease);
+}
+
+.review-assignment-group[open] {
+  border-color: color-mix(in srgb, var(--indigo) 24%, var(--line));
+  box-shadow: var(--shadow);
+}
+
+.review-assignment-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 76px;
+  padding: 0.9rem 1rem;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--micro-fast) var(--micro-ease);
+}
+
+.review-assignment-summary::-webkit-details-marker {
+  display: none;
+}
+
+.review-assignment-summary:hover {
+  background: var(--surface-subtle);
+}
+
+.review-assignment-group[open] > .review-assignment-summary {
+  background: color-mix(in srgb, var(--indigo-soft) 38%, var(--surface));
+}
+
+.review-assignment-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--indigo);
+  background: var(--indigo-soft);
+}
+
+.review-assignment-heading {
+  min-width: 0;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.review-assignment-heading strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-assignment-heading > span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-assignment-counts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+}
+
+.review-assignment-chevron {
+  color: var(--muted);
+  transition: transform var(--micro-medium) var(--micro-ease);
+}
+
+.review-assignment-group[open] .review-assignment-chevron {
+  transform: rotate(180deg);
+}
+
+.review-assignment-body {
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.review-assignment-actions {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.review-assignment-actions > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.review-assignment-actions .btn {
+  min-height: 34px;
+  padding: 0.45rem 0.68rem;
+  font-size: 0.76rem;
+}
+
+.review-assignment-open {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--indigo);
+  background: var(--surface);
+}
+
+@media (max-width: 760px) {
+  .review-assignment-summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.65rem;
+  }
+
+  .review-assignment-counts {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+  }
+
+  .review-assignment-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 @keyframes navigation-highlight {
   to {
     transform: translate3d(560%, 0, 0);
@@ -7151,6 +7303,9 @@ a.card:active {
   .activity-item,
   .parent-activity-more > summary::after,
   .class-card-open-cue svg,
+  .review-assignment-group,
+  .review-assignment-summary,
+  .review-assignment-chevron,
   tbody tr,
   tbody td {
     transition: none !important;

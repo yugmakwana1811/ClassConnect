@@ -53,7 +53,7 @@ export function NavigationFeedbackProvider({
   }, [activePendingHref]);
 
   useEffect(() => {
-    function handleInternalLinkIntent(event: MouseEvent | PointerEvent) {
+    function beginInternalLinkNavigation(event: MouseEvent | PointerEvent) {
       if (event.defaultPrevented || event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
         return;
@@ -67,11 +67,20 @@ export function NavigationFeedbackProvider({
       beginNavigation(destination.pathname);
     }
 
-    document.addEventListener("pointerdown", handleInternalLinkIntent, true);
-    document.addEventListener("click", handleInternalLinkIntent, true);
+    function handlePointerIntent(event: PointerEvent) {
+      beginInternalLinkNavigation(event);
+    }
+
+    function handleKeyboardClick(event: MouseEvent) {
+      if (event.detail !== 0) return;
+      beginInternalLinkNavigation(event);
+    }
+
+    document.addEventListener("pointerdown", handlePointerIntent, true);
+    document.addEventListener("click", handleKeyboardClick, true);
     return () => {
-      document.removeEventListener("pointerdown", handleInternalLinkIntent, true);
-      document.removeEventListener("click", handleInternalLinkIntent, true);
+      document.removeEventListener("pointerdown", handlePointerIntent, true);
+      document.removeEventListener("click", handleKeyboardClick, true);
     };
   }, [beginNavigation]);
 
@@ -88,6 +97,20 @@ export function NavigationFeedbackProvider({
         data-active={activePendingHref ? "true" : "false"}
         aria-hidden="true"
       />
+      <div
+        className="navigation-status"
+        data-active={activePendingHref ? "true" : "false"}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span className="navigation-status-dots" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
+        <span>{activePendingHref ? "Opening workspace" : ""}</span>
+      </div>
     </NavigationFeedbackContext.Provider>
   );
 }

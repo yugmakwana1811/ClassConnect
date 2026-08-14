@@ -51,7 +51,8 @@ export function AppNavLink({
       onTouchStart={prefetchOnIntent}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      data-navigation-pending={pendingHref === href ? "true" : undefined}
+      aria-busy={pendingActive || undefined}
+      data-navigation-pending={pendingActive ? "true" : undefined}
     >
       <span className="nav-icon" aria-hidden="true">
         {icon}

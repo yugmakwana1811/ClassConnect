@@ -1,7 +1,6 @@
 "use client";
 
-import { Pause, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const depthFactors: Record<string, number> = {
   "0": 0.1,
@@ -13,23 +12,6 @@ const depthFactors: Record<string, number> = {
 };
 
 export function CinematicController() {
-  const [motionEnabled, setMotionEnabled] = useState(true);
-
-  useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    const storedPreference = window.localStorage.getItem(
-      "edugrade-cinematic-motion",
-    );
-    const frame = window.requestAnimationFrame(() => {
-      setMotionEnabled(
-        storedPreference ? storedPreference === "on" : !prefersReduced,
-      );
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
   useEffect(() => {
     const root = document.documentElement;
     root.classList.add("cinematic-ready");
@@ -37,9 +19,9 @@ export function CinematicController() {
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const useLiteMode = coarsePointer || reducedMotion || !motionEnabled;
+    const useLiteMode = coarsePointer || reducedMotion;
 
-    root.classList.toggle("cinematic-no-motion", !motionEnabled || reducedMotion);
+    root.classList.toggle("cinematic-no-motion", reducedMotion);
     root.classList.toggle("cinematic-lite", useLiteMode);
 
     const revealElements = Array.from(
@@ -116,34 +98,9 @@ export function CinematicController() {
       window.removeEventListener("resize", requestDepthUpdate);
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
     };
-  }, [motionEnabled]);
+  }, []);
 
-  function toggleMotion() {
-    setMotionEnabled((current) => {
-      const next = !current;
-      window.localStorage.setItem(
-        "edugrade-cinematic-motion",
-        next ? "on" : "off",
-      );
-      return next;
-    });
-  }
-
-  return (
-    <button
-      className="cinematic-motion-toggle"
-      type="button"
-      aria-pressed={!motionEnabled}
-      onClick={toggleMotion}
-    >
-      {motionEnabled ? (
-        <Sparkles size={15} aria-hidden="true" />
-      ) : (
-        <Pause size={15} aria-hidden="true" />
-      )}
-      <span>Motion {motionEnabled ? "on" : "off"}</span>
-    </button>
-  );
+  return null;
 }
 
 export function CinematicLayers({

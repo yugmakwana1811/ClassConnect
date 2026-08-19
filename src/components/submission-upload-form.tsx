@@ -2,8 +2,10 @@
 
 import { upload } from "@vercel/blob/client";
 import { LoaderCircle, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { submitWorkAction } from "@/app/actions";
+import { submissionUploadPrefix } from "@/lib/submission-path";
 import { UploadField } from "./upload-field";
 
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -11,9 +13,12 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export function SubmissionUploadForm({
   assignmentId,
+  userId,
 }: {
   assignmentId: string;
+  userId: string;
 }) {
+  const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [pending, setPending] = useState(false);
   const [progress, setProgress] = useState("");
@@ -41,7 +46,7 @@ export function SubmissionUploadForm({
         setProgress(`Uploading page ${index + 1} of ${files.length}…`);
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
         const blob = await upload(
-          `submissions/${assignmentId}/${safeName}`,
+          `${submissionUploadPrefix(assignmentId, userId)}${safeName}`,
           file,
           {
             access: "private",
@@ -63,7 +68,7 @@ export function SubmissionUploadForm({
         setProgress("");
         return;
       }
-      window.location.assign(
+      router.replace(
         `/student/assignments/${assignmentId}?success=${encodeURIComponent("Submission received")}`,
       );
     } catch (caught) {

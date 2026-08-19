@@ -59,7 +59,12 @@ export default async function TeacherQuizzesPage({
         />
       </div>
       {quizzes.length ? (
-        <div className="card table-wrap">
+        <div
+          className="card table-wrap"
+          role="region"
+          aria-label="Quiz list"
+          tabIndex={0}
+        >
           <table>
             <thead>
               <tr>

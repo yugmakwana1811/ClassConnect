@@ -4,10 +4,14 @@ import {
   aiSchema,
   attendanceDateSchema,
   attendanceStatusSchema,
+  classNameSchema,
   classSchema,
   emailChangeSchema,
   generatedContentSchema,
   joinClassSchema,
+  loginSchema,
+  parentStudentLinkSchema,
+  passwordChangeSchema,
   quizSchema,
   registerSchema,
   reviewSchema,
@@ -81,6 +85,53 @@ describe("EduGrade validation", () => {
       }).success,
     ).toBe(true);
   });
+  it("rejects oversized passwords before expensive password hashing", () => {
+    const oversized = "A".repeat(129);
+    expect(
+      loginSchema.safeParse({
+        email: "teacher@example.com",
+        password: oversized,
+      }).success,
+    ).toBe(false);
+    expect(
+      passwordChangeSchema.safeParse({
+        currentPassword: oversized,
+        newPassword: "NewSecurePass!42",
+        confirmPassword: "NewSecurePass!42",
+      }).success,
+    ).toBe(false);
+  });
+  it("allows a parent account without student-only grade details", () => {
+    expect(
+      registerSchema.safeParse({
+        name: "Kavita Mehta",
+        email: "parent@example.com",
+        password: "StrongPass!42",
+        confirmPassword: "StrongPass!42",
+        role: "PARENT",
+        grade: "",
+      }).success,
+    ).toBe(true);
+  });
+  it("normalizes secure parent connection details", () => {
+    expect(
+      parentStudentLinkSchema.parse({
+        studentEmail: " Student@Example.com ",
+        accessCode: " arjun2p4km ",
+        relationship: " Mother ",
+      }),
+    ).toEqual({
+      studentEmail: "student@example.com",
+      accessCode: "ARJUN2P4KM",
+      relationship: "Mother",
+    });
+    expect(
+      parentStudentLinkSchema.safeParse({
+        studentEmail: "student@example.com",
+        accessCode: "SHORT",
+      }).success,
+    ).toBe(false);
+  });
   it("supports only CBSE Classes 6 through 12", () => {
     expect(
       classSchema.safeParse({
@@ -111,6 +162,12 @@ describe("EduGrade validation", () => {
         grade: "13",
       }).success,
     ).toBe(false);
+  });
+  it("normalizes class names and rejects blank-looking names", () => {
+    expect(classNameSchema.parse("  Class 11 Commerce  ")).toBe(
+      "Class 11 Commerce",
+    );
+    expect(classNameSchema.safeParse("   ").success).toBe(false);
   });
   it("normalizes matching email changes", () => {
     const parsed = emailChangeSchema.parse({

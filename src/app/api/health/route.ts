@@ -1,18 +1,24 @@
 import { checkDatabaseConnection } from "@/lib/db";
+import { productionConfiguration } from "@/lib/runtime-config";
 
 export async function GET() {
   const database = await checkDatabaseConnection();
-  const storageConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  const configuration = productionConfiguration();
   const aiConfigured = Boolean(process.env.OPENROUTER_API_KEY?.trim());
+  const ready = database.ok && configuration.ready;
   return Response.json(
     {
-      status: database.ok ? "ready" : "degraded",
+      status: ready ? "ready" : "degraded",
       database: database.ok ? "connected" : "unavailable",
-      storage: storageConfigured ? "configured" : "unavailable",
+      auth: configuration.authConfigured ? "configured" : "unavailable",
+      storage: configuration.storageConfigured ? "configured" : "unavailable",
+      serverActions: configuration.serverActionsConfigured
+        ? "configured"
+        : "unavailable",
       ai: aiConfigured ? "configured" : "fallback",
     },
     {
-      status: database.ok ? 200 : 503,
+      status: ready ? 200 : 503,
       headers: { "Cache-Control": "no-store" },
     },
   );

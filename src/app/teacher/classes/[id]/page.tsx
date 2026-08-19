@@ -182,6 +182,13 @@ export default async function ClassDetail({
                     }}
                   >
                     <span className="hint">{e.student.rollNumber ?? "—"}</span>
+                    <Link
+                      href={`/teacher/students/${e.student.id}`}
+                      className="btn btn-secondary"
+                      style={{ fontSize: ".75rem", padding: ".45rem .6rem" }}
+                    >
+                      View progress
+                    </Link>
                     <form action={removeEnrollmentAction}>
                       <input type="hidden" name="classId" value={c.id} />
                       <input type="hidden" name="enrollmentId" value={e.id} />

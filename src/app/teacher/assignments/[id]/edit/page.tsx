@@ -84,7 +84,7 @@ export default async function EditAssignmentPage({
               name="type"
               defaultValue={assignment.type}
             >
-              {["Assignment", "Homework", "Test", "Worksheet", "Practice"].map(
+              {["Assignment", "Homework", "Test", "Worksheet", "Practice", "Project", "Classwork"].map(
                 (type) => (
                   <option key={type}>{type}</option>
                 ),

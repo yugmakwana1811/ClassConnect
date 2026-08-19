@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowRight,
   BarChart3,
@@ -16,13 +17,21 @@ import {
   CinematicController,
   CinematicLayers,
 } from "@/components/cinematic-controller";
-import { CinematicInterfaceShowcase } from "@/components/cinematic-interface-showcase";
 import { FloatingTooltip } from "@/components/floating-tooltip";
-import { FeatureAtlas } from "@/components/feature-atlas";
-import { HoverExpand } from "@/components/hover-expand";
 import { Logo } from "@/components/logo";
-import { MotionAccordion } from "@/components/motion-accordion";
 import { MotionNavigationMenu } from "@/components/motion-navigation-menu";
+import ShinyText from "@/components/ShinyText";
+import {
+  DeferredCinematicInterfaceShowcase,
+  DeferredFeatureAtlas,
+  DeferredHoverExpand,
+  DeferredMotionAccordion,
+  DeferredTextMorph,
+} from "@/components/deferred-marketing";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const cycle = [
   "Plan",
@@ -68,19 +77,19 @@ const teachingMoments = [
 
 const frequentlyAskedQuestions = [
   {
-    question: "Does EduGrade AI decide marks or final feedback?",
+    question: "Does ClassConnect decide marks or final feedback?",
     answer:
       "No. AI creates editable suggestions only. Teachers review the work, decide marks, edit feedback, and explicitly publish the final result.",
   },
   {
     question: "Which classes and subjects are supported?",
     answer:
-      "EduGrade supports Classes 6 through 12 with grade-aware CBSE subject catalogs, including core subjects, languages, electives, skill subjects, and internal-assessment areas.",
+      "ClassConnect supports Classes 6 through 12 with grade-aware CBSE subject catalogs, including core subjects, languages, electives, skill subjects, and internal-assessment areas.",
   },
   {
     question: "How does subject-aware AI model selection work?",
     answer:
-      "EduGrade selects from a server-controlled allowlist based on the subject and task. Users cannot override the chosen model, and safe fallback content remains available if every permitted provider request fails.",
+      "ClassConnect selects from a server-controlled allowlist based on the subject and task. Users cannot override the chosen model, and safe fallback content remains available if every permitted provider request fails.",
   },
   {
     question: "Can students submit handwritten answers?",
@@ -111,7 +120,7 @@ export default function Home() {
             Sign in
           </Link>
           <Link className="btn btn-primary" href="/register">
-            Start free <ArrowRight size={16} />
+            Sign Up <ArrowRight size={16} />
           </Link>
         </div>
       </header>
@@ -119,7 +128,7 @@ export default function Home() {
       <section
         className="cinematic-hero-scene hero-pattern"
         data-cinematic-scene
-        aria-label="EduGrade AI product introduction"
+        aria-label="ClassConnect product introduction"
       >
         <CinematicLayers variant="blue" />
         <div className="cinematic-ghost-type" data-depth="1" aria-hidden="true">
@@ -132,7 +141,14 @@ export default function Home() {
             data-cinematic-reveal
           >
             <div className="hero-kicker">
-              <Sparkles size={14} /> Classroom intelligence · Classes 6–12
+              <Sparkles size={14} />
+              <ShinyText
+                text="Classroom intelligence · Classes 6–12"
+                speed={3.2}
+                color="#334155"
+                shineColor="#6b6de6"
+                spread={105}
+              />
             </div>
             <h1
               className="display hero-title cinematic-hero-title"
@@ -197,7 +213,7 @@ export default function Home() {
 
             <div
               className="product-stage cinematic-hero-product"
-              aria-label="EduGrade teacher workspace preview"
+              aria-label="ClassConnect teacher workspace preview"
             >
               <div className="product-window">
                 <div className="window-bar">
@@ -210,7 +226,7 @@ export default function Home() {
                 </div>
                 <div className="preview-shell">
                   <div className="preview-nav">
-                    <div className="preview-logo">EduGrade AI</div>
+                    <div className="preview-logo">ClassConnect</div>
                     {[
                       "Overview",
                       "Classes",
@@ -280,7 +296,7 @@ export default function Home() {
 
         <div
           className="hero-proof cinematic-hero-proof"
-          aria-label="EduGrade platform highlights"
+          aria-label="ClassConnect platform highlights"
           data-depth="4"
         >
           <div>
@@ -308,6 +324,23 @@ export default function Home() {
           <span>One continuous classroom record</span>
           <strong>From first idea to next learning action.</strong>
         </div>
+        <DeferredTextMorph
+          className="cinematic-cycle-morph"
+          words={cycle}
+          transition={{ duration: 0.8, delay: 0.9, ease: "circInOut" }}
+          color="var(--indigo)"
+          font={{
+            fontFamily:
+              '"Inter", "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif',
+            fontWeight: 700,
+            fontSize: "clamp(3rem, 8vw, 7.5rem)",
+            lineHeight: "1em",
+            letterSpacing: "-0.055em",
+            textAlign: "center",
+          }}
+          ariaLabel="The connected teaching cycle: plan, teach, assign, collect, evaluate, support, communicate, and analyse"
+          dataDepth="2"
+        />
         <div className="cycle-rail cinematic-cycle-rail" data-depth="3">
           {cycle.map((item, index) => (
             <div className="cycle-step" key={item}>
@@ -322,7 +355,7 @@ export default function Home() {
         className="marketing-section cinematic-interface-scene"
         id="interface"
         data-cinematic-scene
-        aria-label="Interactive EduGrade interface tour"
+        aria-label="Interactive ClassConnect interface tour"
       >
         <CinematicLayers variant="teal" />
         <div className="section-inner">
@@ -340,7 +373,7 @@ export default function Home() {
             </p>
           </div>
           <div data-cinematic-reveal>
-            <CinematicInterfaceShowcase />
+            <DeferredCinematicInterfaceShowcase />
           </div>
         </div>
       </section>
@@ -366,7 +399,7 @@ export default function Home() {
             </p>
           </div>
           <div data-cinematic-reveal>
-            <FeatureAtlas />
+            <DeferredFeatureAtlas />
           </div>
         </div>
       </section>
@@ -518,7 +551,7 @@ export default function Home() {
             </p>
           </div>
           <div data-cinematic-reveal>
-            <HoverExpand items={teachingMoments} />
+            <DeferredHoverExpand items={teachingMoments} />
           </div>
         </div>
       </section>
@@ -589,7 +622,7 @@ export default function Home() {
               What schools, teachers, and students usually ask.
             </h2>
             <p>
-              EduGrade combines practical classroom workflows with explicit
+              ClassConnect combines practical classroom workflows with explicit
               teacher control, protected access, and honest AI boundaries.
             </p>
             <Link href="/about" className="text-link">
@@ -598,7 +631,7 @@ export default function Home() {
             </Link>
           </div>
           <div data-cinematic-reveal>
-            <MotionAccordion items={frequentlyAskedQuestions} />
+            <DeferredMotionAccordion items={frequentlyAskedQuestions} />
           </div>
         </div>
       </section>
@@ -607,7 +640,7 @@ export default function Home() {
         className="marketing-section cinematic-final-scene"
         style={{ textAlign: "center" }}
         data-cinematic-scene
-        aria-label="Get started with EduGrade AI"
+        aria-label="Get started with ClassConnect"
       >
         <CinematicLayers variant="teal" />
         <div className="section-inner" data-depth="4" data-cinematic-reveal>
@@ -616,7 +649,7 @@ export default function Home() {
             className="display section-heading"
             style={{ marginInline: "auto" }}
           >
-            Smart Teaching. Faster Feedback. Better Learning.
+            Connecting the classroom beyond the classroom.
           </h2>
           <p
             style={{
@@ -631,14 +664,14 @@ export default function Home() {
             flow.
           </p>
           <Link className="btn btn-primary" href="/login">
-            Enter EduGrade AI <ArrowRight size={17} />
+            Enter ClassConnect <ArrowRight size={17} />
           </Link>
         </div>
       </section>
 
       <footer className="marketing-footer">
-        <span>© 2026 EduGrade AI</span>
-        <span>Smart Teaching. Faster Feedback. Better Learning.</span>
+        <span>© 2026 ClassConnect</span>
+        <span>Connecting the classroom beyond the classroom.</span>
         <Link href="/about">Product information & AI safety</Link>
       </footer>
     </main>

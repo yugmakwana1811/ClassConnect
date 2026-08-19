@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { createSession, requireUser } from "@/lib/auth";
 import {
@@ -47,7 +48,7 @@ export async function updateAccountAction(form: FormData) {
         where: { userId: user.id },
         data: { school: parsed.data.school, subject: parsed.data.subject },
       });
-    else
+    else if (user.role === "STUDENT")
       await tx.studentProfile.update({
         where: { userId: user.id },
         data: {
@@ -56,10 +57,16 @@ export async function updateAccountAction(form: FormData) {
           rollNumber: parsed.data.rollNumber,
         },
       });
+    else
+      await tx.parentProfile.update({
+        where: { userId: user.id },
+        data: { school: parsed.data.school },
+      });
     await tx.activityLog.create({
       data: { userId: user.id, action: "Updated profile", entityType: "User" },
     });
   });
+  revalidatePath("/", "layout");
   redirect("/account?success=Profile updated");
 }
 
@@ -126,7 +133,7 @@ export async function changeEmailAction(form: FormData) {
     )
       fail("That email address is already in use.", returnPath);
     console.error(
-      "[EduGrade] Email change failed",
+      "[ClassConnect] Email change failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail(
@@ -136,6 +143,7 @@ export async function changeEmailAction(form: FormData) {
   }
 
   await createSession(user.id);
+  revalidatePath("/", "layout");
   redirect(
     "/account/email?success=Email changed and other sessions signed out",
   );
@@ -154,6 +162,17 @@ export async function changePasswordAction(form: FormData) {
       parsed.error.issues[0]?.message ?? "Check the password fields.",
       returnPath,
     );
+  const throttleKey = await authThrottleKey("password-change", user.id);
+  try {
+    await assertAuthAllowed(throttleKey);
+  } catch (error) {
+    fail(
+      error instanceof Error
+        ? error.message
+        : "Password change is temporarily unavailable.",
+      returnPath,
+    );
+  }
   const stored = await db.user.findUnique({
     where: { id: user.id },
     select: { passwordHash: true },
@@ -161,8 +180,11 @@ export async function changePasswordAction(form: FormData) {
   if (
     !stored ||
     !(await bcrypt.compare(parsed.data.currentPassword, stored.passwordHash))
-  )
+  ) {
+    await recordAuthFailure(throttleKey);
     fail("Current password is incorrect.", returnPath);
+  }
+  await clearAuthFailures(throttleKey);
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
   await db.$transaction([
     db.user.update({ where: { id: user.id }, data: { passwordHash } }),
@@ -172,6 +194,7 @@ export async function changePasswordAction(form: FormData) {
     }),
   ]);
   await createSession(user.id);
+  revalidatePath("/", "layout");
   redirect(
     "/account/password?success=Password changed and other sessions signed out",
   );

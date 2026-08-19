@@ -74,6 +74,8 @@ export default async function NewAssignment({
               <option>Test</option>
               <option>Worksheet</option>
               <option>Practice</option>
+              <option>Project</option>
+              <option>Classwork</option>
             </select>
           </label>
         </div>

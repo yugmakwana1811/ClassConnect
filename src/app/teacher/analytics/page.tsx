@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   AlertTriangle,
   BarChart3,
@@ -11,6 +12,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { topicPerformance } from "@/lib/analytics";
 import { PageHeader, StatCard } from "@/components/ui";
+import { StudentProgressGraph } from "@/components/student-progress-graph";
 
 export default async function TeacherAnalytics() {
   const user = await requireUser("TEACHER");
@@ -18,24 +20,32 @@ export default async function TeacherAnalytics() {
   const [assignments, submissions, attendance, quizAttempts, generations] =
     await Promise.all([
       db.assignment.findMany({
-        where: { class: { teacherId } },
-        include: {
-          _count: { select: { submissions: true } },
-          class: { include: { _count: { select: { enrollments: true } } } },
+        where: { status: { not: "DRAFT" }, class: { teacherId } },
+        select: {
+          class: { select: { _count: { select: { enrollments: true } } } },
         },
       }),
       db.submission.findMany({
         where: { assignment: { class: { teacherId } } },
-        include: {
-          result: true,
-          assignment: true,
-          student: { include: { user: true } },
+        select: {
+          status: true,
+          result: { select: { marks: true, published: true } },
+          assignment: {
+            select: { maxMarks: true, topic: true, title: true },
+          },
+          student: { select: { id: true, user: { select: { name: true } } } },
         },
       }),
-      db.attendanceRecord.findMany({ where: { class: { teacherId } } }),
+      db.attendanceRecord.findMany({
+        where: { class: { teacherId } },
+        select: { status: true },
+      }),
       db.quizAttempt.findMany({
         where: { quiz: { class: { teacherId } } },
-        include: { quiz: { include: { questions: true } } },
+        select: {
+          score: true,
+          quiz: { select: { questions: { select: { marks: true } } } },
+        },
       }),
       db.aIContentGeneration.count({ where: { userId: user.id } }),
     ]);
@@ -51,10 +61,9 @@ export default async function TeacherAnalytics() {
         percentages.reduce((sum, score) => sum + score, 0) / percentages.length,
       )
     : 0;
-  const completed = assignments.reduce(
-    (sum, assignment) => sum + assignment._count.submissions,
-    0,
-  );
+  const completed = submissions.filter(
+    (submission) => submission.status !== "DRAFT",
+  ).length;
   const expected = assignments.reduce(
     (sum, assignment) => sum + assignment.class._count.enrollments,
     0,
@@ -69,15 +78,18 @@ export default async function TeacherAnalytics() {
     ? Math.round((present / attendance.length) * 100)
     : 0;
   const studentsNeedingAttention = [
-    ...new Set(
+    ...new Map(
       scored
         .filter(
           (submission) =>
             Number(submission.result!.marks) / submission.assignment.maxMarks <
             0.6,
         )
-        .map((submission) => submission.student.user.name),
-    ),
+        .map((submission) => [
+          submission.student.id,
+          { id: submission.student.id, name: submission.student.user.name },
+        ]),
+    ).values(),
   ];
   const topics = topicPerformance(
     scored.map((submission) => ({
@@ -176,6 +188,7 @@ export default async function TeacherAnalytics() {
           tone="gold"
         />
       </div>
+      <StudentProgressGraph />
       <div
         style={{
           display: "grid",
@@ -240,9 +253,9 @@ export default async function TeacherAnalytics() {
             Students to check in with
           </h2>
           {studentsNeedingAttention.length ? (
-            studentsNeedingAttention.map((name) => (
+            studentsNeedingAttention.map((student) => (
               <div
-                key={name}
+                key={student.id}
                 style={{
                   display: "flex",
                   gap: ".7rem",
@@ -255,7 +268,12 @@ export default async function TeacherAnalytics() {
               >
                 <AlertTriangle size={18} color="var(--coral)" />
                 <div>
-                  <strong>{name}</strong>
+                  <Link
+                    href={`/teacher/students/${student.id}`}
+                    style={{ fontWeight: 850 }}
+                  >
+                    {student.name}
+                  </Link>
                   <div className="hint">
                     A published score is below 60%; review the work and
                     classroom context.

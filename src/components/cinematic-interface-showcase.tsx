@@ -77,7 +77,7 @@ export function CinematicInterfaceShowcase() {
         <aside className="cinematic-ui-sidebar" aria-label="Tour navigation">
           <div className="cinematic-ui-brand">
             <Sparkles size={16} aria-hidden="true" />
-            EduGrade
+            ClassConnect
           </div>
           {[
             [LayoutDashboard, "Overview"],
@@ -118,7 +118,7 @@ export function CinematicInterfaceShowcase() {
           <div
             className="cinematic-tour-tabs"
             role="tablist"
-            aria-label="Explore the EduGrade workflow"
+            aria-label="Explore the ClassConnect workflow"
           >
             {tourTabs.map(({ id, label, icon: Icon }, index) => (
               <button

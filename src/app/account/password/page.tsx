@@ -17,7 +17,7 @@ export default async function ChangePasswordPage({
       <PageHeader
         eyebrow="Account security"
         title="Change your password"
-        description="Use this dedicated dashboard to replace your password and secure access to your EduGrade account."
+        description="Use this dedicated dashboard to replace your password and secure access to your ClassConnect account."
         action={
           <Link href="/account" className="btn btn-secondary">
             <ArrowLeft size={16} /> Account settings
@@ -102,7 +102,7 @@ export default async function ChangePasswordPage({
             Session protection
           </h2>
           <p className="hint" style={{ lineHeight: 1.65, margin: 0 }}>
-            EduGrade verifies your current password, securely hashes the new
+            ClassConnect verifies your current password, securely hashes the new
             password, and signs out every other active session after a
             successful change.
           </p>

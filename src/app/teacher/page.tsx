@@ -11,75 +11,147 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, SafetyNote, StatCard } from "@/components/ui";
 import { formatDateTime } from "@/lib/utils";
-import { topicPerformance } from "@/lib/analytics";
+
+type TeacherDashboardMetrics = {
+  classes: number;
+  students: number;
+  active: number;
+  pending: number;
+  results_count: number;
+  average: number | null;
+  announcements: number;
+  generations: number;
+  weakest_topic: string | null;
+  weakest_average: number | null;
+  weakest_evidence_count: number | null;
+  activities: Array<{
+    id: string;
+    action: string;
+    createdAt: string;
+  }>;
+};
 
 export default async function TeacherDashboard() {
   const user = await requireUser("TEACHER");
   const tid = user.teacherProfile!.id;
-  const [
-    classes,
-    students,
-    active,
-    pending,
-    results,
-    announcements,
-    generations,
-    activities,
-  ] = await Promise.all([
-    db.classRoom.count({ where: { teacherId: tid } }),
-    db.classEnrollment.count({ where: { class: { teacherId: tid } } }),
-    db.assignment.count({
-      where: {
-        class: { teacherId: tid },
-        status: "PUBLISHED",
-        dueAt: { gte: new Date() },
-      },
-    }),
-    db.submission.count({
-      where: { assignment: { class: { teacherId: tid } }, status: "SUBMITTED" },
-    }),
-    db.result.findMany({
-      where: {
-        submission: { assignment: { class: { teacherId: tid } } },
-        published: true,
-      },
-      select: {
-        marks: true,
-        submission: {
-          select: {
-            assignment: {
-              select: { maxMarks: true, topic: true, title: true },
-            },
-          },
-        },
-      },
-    }),
-    db.announcement.count({ where: { class: { teacherId: tid } } }),
-    db.aIContentGeneration.count({ where: { userId: user.id } }),
-    db.activityLog.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    }),
-  ]);
-  const average = results.length
-    ? Math.round(
-        results.reduce(
-          (a, r) =>
-            a + (Number(r.marks) / r.submission.assignment.maxMarks) * 100,
-          0,
-        ) / results.length,
+  const [metrics] = await db.$queryRaw<TeacherDashboardMetrics[]>`
+      WITH published_results AS (
+        SELECT
+          LEAST(
+            100::numeric,
+            GREATEST(0::numeric, (r."marks" / NULLIF(a."maxMarks", 0)) * 100)
+          ) AS percentage,
+          COALESCE(NULLIF(BTRIM(a."topic"), ''), BTRIM(a."title")) AS topic
+        FROM "Result" r
+        INNER JOIN "Submission" s ON s."id" = r."submissionId"
+        INNER JOIN "Assignment" a ON a."id" = s."assignmentId"
+        INNER JOIN "ClassRoom" c ON c."id" = a."classId"
+        WHERE c."teacherId" = ${tid}
+          AND r."published" = true
+      ),
+      topic_performance AS (
+        SELECT
+          MIN(topic) AS topic,
+          ROUND(AVG(percentage))::int AS average,
+          COUNT(*)::int AS evidence_count
+        FROM published_results
+        WHERE topic <> ''
+        GROUP BY LOWER(topic)
+      ),
+      weakest_topic AS (
+        SELECT topic, average, evidence_count
+        FROM topic_performance
+        ORDER BY average ASC, evidence_count DESC
+        LIMIT 1
       )
-    : 0;
-  const saved = Math.round(generations * 18 + results.length * 7);
-  const weakestTopic = topicPerformance(
-    results.map((result) => ({
-      topic: result.submission.assignment.topic,
-      title: result.submission.assignment.title,
-      marks: Number(result.marks),
-      maxMarks: result.submission.assignment.maxMarks,
-    })),
-  )[0];
+      SELECT
+        (SELECT COUNT(*)::int FROM "ClassRoom" c WHERE c."teacherId" = ${tid}) AS classes,
+        (
+          SELECT COUNT(DISTINCT e."studentId")::int
+          FROM "ClassEnrollment" e
+          INNER JOIN "ClassRoom" c ON c."id" = e."classId"
+          WHERE c."teacherId" = ${tid}
+        ) AS students,
+        (
+          SELECT COUNT(*)::int
+          FROM "Assignment" a
+          INNER JOIN "ClassRoom" c ON c."id" = a."classId"
+          WHERE c."teacherId" = ${tid}
+            AND a."status" = 'PUBLISHED'
+            AND a."dueAt" >= CURRENT_TIMESTAMP
+        ) AS active,
+        (
+          SELECT COUNT(*)::int
+          FROM "Submission" s
+          INNER JOIN "Assignment" a ON a."id" = s."assignmentId"
+          INNER JOIN "ClassRoom" c ON c."id" = a."classId"
+          WHERE c."teacherId" = ${tid}
+            AND s."status" = 'SUBMITTED'
+        ) AS pending,
+        (SELECT COUNT(*)::int FROM published_results) AS results_count,
+        (SELECT ROUND(AVG(percentage))::int FROM published_results) AS average,
+        (
+          SELECT COUNT(*)::int
+          FROM "Announcement" n
+          INNER JOIN "ClassRoom" c ON c."id" = n."classId"
+          WHERE c."teacherId" = ${tid}
+        ) AS announcements,
+        (
+          SELECT COUNT(*)::int
+          FROM "AIContentGeneration" g
+          WHERE g."userId" = ${user.id}
+        ) AS generations,
+        (SELECT topic FROM weakest_topic) AS weakest_topic,
+        (SELECT average FROM weakest_topic) AS weakest_average,
+        (SELECT evidence_count FROM weakest_topic) AS weakest_evidence_count,
+        (
+          SELECT COALESCE(
+            JSONB_AGG(
+              JSONB_BUILD_OBJECT(
+                'id', recent."id",
+                'action', recent."action",
+                'createdAt', recent."createdAt"
+              )
+              ORDER BY recent."createdAt" DESC
+            ),
+            '[]'::jsonb
+          )
+          FROM (
+            SELECT l."id", l."action", l."createdAt"
+            FROM "ActivityLog" l
+            WHERE l."userId" = ${user.id}
+            ORDER BY l."createdAt" DESC
+            LIMIT 6
+          ) recent
+        ) AS activities
+    `;
+  const resolvedMetrics = metrics ?? {
+    classes: 0,
+    students: 0,
+    active: 0,
+    pending: 0,
+    results_count: 0,
+    average: null,
+    announcements: 0,
+    generations: 0,
+    weakest_topic: null,
+    weakest_average: null,
+    weakest_evidence_count: null,
+    activities: [],
+  };
+  const saved = Math.round(
+    resolvedMetrics.generations * 18 + resolvedMetrics.results_count * 7,
+  );
+  const weakestTopic =
+    resolvedMetrics.weakest_topic &&
+    resolvedMetrics.weakest_average !== null &&
+    resolvedMetrics.weakest_evidence_count !== null
+      ? {
+          topic: resolvedMetrics.weakest_topic,
+          average: resolvedMetrics.weakest_average,
+          evidenceCount: resolvedMetrics.weakest_evidence_count,
+        }
+      : null;
   return (
     <div className="page">
       <PageHeader
@@ -95,21 +167,21 @@ export default async function TeacherDashboard() {
       <div className="metric-strip">
         <StatCard
           label="Review queue"
-          value={pending}
-          detail={pending ? "Needs your attention" : "You’re all caught up"}
+          value={resolvedMetrics.pending}
+          detail={resolvedMetrics.pending ? "Needs your attention" : "You’re all caught up"}
           icon={Clock3}
           tone="coral"
         />
         <StatCard
           label="Open work"
-          value={active}
+          value={resolvedMetrics.active}
           detail="Published assignments"
           icon={FileCheck2}
         />
         <StatCard
           label="Class average"
-          value={results.length ? `${average}%` : "—"}
-          detail={`${results.length} published result${results.length === 1 ? "" : "s"}`}
+          value={resolvedMetrics.results_count ? `${resolvedMetrics.average}%` : "—"}
+          detail={`${resolvedMetrics.results_count} published result${resolvedMetrics.results_count === 1 ? "" : "s"}`}
           icon={GraduationCap}
         />
         <StatCard
@@ -123,19 +195,19 @@ export default async function TeacherDashboard() {
       <div className="facts-strip" aria-label="Supporting teacher metrics">
         <div className="fact">
           <span>Classes</span>
-          <strong>{classes}</strong>
+          <strong>{resolvedMetrics.classes}</strong>
         </div>
         <div className="fact">
           <span>Students</span>
-          <strong>{students}</strong>
+          <strong>{resolvedMetrics.students}</strong>
         </div>
         <div className="fact">
           <span>Announcements</span>
-          <strong>{announcements}</strong>
+          <strong>{resolvedMetrics.announcements}</strong>
         </div>
         <div className="fact">
           <span>AI drafts</span>
-          <strong>{generations}</strong>
+          <strong>{resolvedMetrics.generations}</strong>
         </div>
       </div>
       <div className="dashboard-grid">
@@ -154,8 +226,8 @@ export default async function TeacherDashboard() {
             }}
           >
             <strong>
-              {pending > 0
-                ? `Review ${pending} submitted response${pending > 1 ? "s" : ""}`
+              {resolvedMetrics.pending > 0
+                ? `Review ${resolvedMetrics.pending} submitted response${resolvedMetrics.pending > 1 ? "s" : ""}`
                 : weakestTopic
                   ? `Revisit ${weakestTopic.topic}`
                   : "Create the next learning activity"}
@@ -167,14 +239,14 @@ export default async function TeacherDashboard() {
                 margin: ".35rem 0 .7rem",
               }}
             >
-              {pending > 0
+              {resolvedMetrics.pending > 0
                 ? "Start with the oldest submissions, use AI for a draft comment, then edit before publishing."
                 : weakestTopic
                   ? `Published results currently average ${weakestTopic.average}% for this topic across ${weakestTopic.evidenceCount} result${weakestTopic.evidenceCount === 1 ? "" : "s"}. Verify the need using classroom evidence before acting.`
                   : "There is not enough result evidence for a topic recommendation yet. Create a lesson resource, assignment, or quiz for your next objective."}
             </p>
             <Link
-              href={pending > 0 ? "/teacher/review" : "/teacher/ai-tools"}
+              href={resolvedMetrics.pending > 0 ? "/teacher/review" : "/teacher/ai-tools"}
               style={{
                 color: "var(--indigo)",
                 fontWeight: 850,
@@ -197,8 +269,8 @@ export default async function TeacherDashboard() {
             <CheckCircle2 color="var(--teal)" />
           </div>
           <div className="activity-list">
-            {activities.length ? (
-              activities.map((a) => (
+            {resolvedMetrics.activities.length ? (
+              resolvedMetrics.activities.map((a) => (
                 <div key={a.id} className="activity-item">
                   <span className="activity-icon">
                     <CheckCircle2 size={15} />

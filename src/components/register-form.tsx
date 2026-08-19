@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { GraduationCap, UserRound } from "lucide-react";
+import { GraduationCap, HeartHandshake, UserRound } from "lucide-react";
 import { registerAction } from "@/app/auth-actions";
 import { SubmitButton } from "@/components/submit-button";
 import { GradeSelect } from "@/components/education-selects";
+import { PasswordField } from "@/components/password-field";
 
 export function RegisterForm() {
-  const [role, setRole] = useState<"TEACHER" | "STUDENT">("TEACHER");
+  const [role, setRole] = useState<"TEACHER" | "STUDENT" | "PARENT">(
+    "TEACHER",
+  );
   return (
     <form action={registerAction} style={{ display: "grid", gap: ".9rem" }}>
       <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
@@ -15,12 +18,17 @@ export function RegisterForm() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
             gap: ".6rem",
           }}
         >
-          {(["TEACHER", "STUDENT"] as const).map((option) => {
-            const Icon = option === "TEACHER" ? GraduationCap : UserRound;
+          {(["TEACHER", "STUDENT", "PARENT"] as const).map((option) => {
+            const Icon =
+              option === "TEACHER"
+                ? GraduationCap
+                : option === "PARENT"
+                  ? HeartHandshake
+                  : UserRound;
             return (
               <label
                 key={option}
@@ -43,7 +51,13 @@ export function RegisterForm() {
                   size={16}
                   style={{ verticalAlign: "middle", marginRight: ".35rem" }}
                 />
-                <strong>{option === "TEACHER" ? "Teacher" : "Student"}</strong>
+                <strong>
+                  {option === "TEACHER"
+                    ? "Teacher"
+                    : option === "PARENT"
+                      ? "Parent"
+                      : "Student"}
+                </strong>
               </label>
             );
           })}
@@ -101,7 +115,7 @@ export function RegisterForm() {
             placeholder="Accountancy"
           />
         </label>
-      ) : (
+      ) : role === "STUDENT" ? (
         <div
           style={{
             display: "grid",
@@ -120,36 +134,38 @@ export function RegisterForm() {
             <input className="field" name="rollNumber" maxLength={30} />
           </label>
         </div>
+      ) : (
+        <div
+          className="hint"
+          style={{
+            padding: ".8rem",
+            borderRadius: 10,
+            background: "var(--teal-soft)",
+          }}
+        >
+          After registration, connect a student using their email address and
+          private parent access code.
+        </div>
       )}
-      <label>
-        <span className="label">Password</span>
-        <input
-          className="field"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={10}
-          maxLength={128}
-          pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{10,}"
-          title="Use 10+ characters with uppercase, lowercase, number, and special character"
-          required
-        />
-        <span className="hint">
-          10+ characters with uppercase, lowercase, number, and symbol.
-        </span>
-      </label>
-      <label>
-        <span className="label">Confirm password</span>
-        <input
-          className="field"
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          minLength={10}
-          maxLength={128}
-          required
-        />
-      </label>
+      <PasswordField
+        label="Password"
+        name="password"
+        autoComplete="new-password"
+        minLength={10}
+        maxLength={128}
+        pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{10,}"
+        title="Use 10+ characters with uppercase, lowercase, number, and special character"
+        hint="10+ characters with uppercase, lowercase, number, and symbol."
+        required
+      />
+      <PasswordField
+        label="Confirm password"
+        name="confirmPassword"
+        autoComplete="new-password"
+        minLength={10}
+        maxLength={128}
+        required
+      />
       <SubmitButton pendingText="Creating secure account…">
         Create my account
       </SubmitButton>

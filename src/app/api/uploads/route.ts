@@ -4,20 +4,30 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MAX_ANSWER_PAGE_SIZE } from "@/lib/storage";
+import { submissionUploadPrefix } from "@/lib/submission-path";
 
 const payloadSchema = z.object({ assignmentId: z.string().min(1) });
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser();
+    if (!user)
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 },
+      );
+    if (user.role !== "STUDENT")
+      return NextResponse.json(
+        { error: "Student access is required" },
+        { status: 403 },
+      );
+
     const body = (await request.json()) as HandleUploadBody;
     const response = await handleUpload({
       body,
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
-        const user = await getCurrentUser();
-        if (!user || user.role !== "STUDENT")
-          throw new Error("Authentication required");
         let payload: unknown = null;
         try {
           payload = clientPayload ? JSON.parse(clientPayload) : null;
@@ -49,7 +59,7 @@ export async function POST(request: Request) {
           assignment.submissions[0].status !== "DRAFT"
         )
           throw new Error("Submission is already locked");
-        const expectedPrefix = `submissions/${assignment.id}/`;
+        const expectedPrefix = submissionUploadPrefix(assignment.id, user.id);
         if (!pathname.startsWith(expectedPrefix) || pathname.includes(".."))
           throw new Error("Invalid upload path");
         return {
@@ -69,11 +79,11 @@ export async function POST(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     console.error(
-      "[EduGrade] Client upload request failed",
+      "[ClassConnect] Client upload request failed",
       error instanceof Error ? error.message : "Unknown upload error",
     );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload failed" },
+      { error: "The upload could not be authorized. Refresh and try again." },
       { status: 400 },
     );
   }

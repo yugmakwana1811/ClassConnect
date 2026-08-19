@@ -18,18 +18,23 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:verify-demo": "tsx scripts/verify-demo-data.ts",
+    "db:test-demo": "tsx scripts/test-demo-seed.ts",
+    "qa:demo": "tsx scripts/start-demo-qa.ts",
     "db:studio": "npm run db:sync && prisma studio",
     "db:sync": "prisma generate && prisma db push"
   },
   "dependencies": {
+    "@expo-google-fonts/roboto": "^0.4.3",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@prisma/client": "^6.19.0",
-    "@vercel/blob": "^2.6.1",
+    "@vercel/blob": "^2.7.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
-    "jose": "^6.2.3",
     "lucide-react": "^1.25.0",
-    "motion": "^12.42.2",
+    "motion": "^12.43.0",
     "next": "16.2.11",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1",
@@ -50,8 +55,18 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
-    "postcss": "8.5.22",
+    "deepmerge-ts": "8.0.1",
+    "nanoid": "3.3.18",
+    "postcss": "8.5.26",
     "effect": "3.20.0",
     "sharp": "0.35.3"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.0": true,
+    "@prisma/engines@6.19.0": true,
+    "prisma@6.19.0": true,
+    "unrs-resolver@1.12.2": true,
+    "fsevents@2.3.3": true,
+    "esbuild@0.28.1": true
   }
 }

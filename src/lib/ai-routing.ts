@@ -2,25 +2,32 @@ import { isCbseLanguageSubject } from "./education";
 
 export const AI_MODELS = {
   reasoning: {
-    id: "nvidia/nemotron-3-ultra-550b-a55b:free",
-    label: "Nemotron 3 Ultra",
+    id: "google/gemma-4-31b-it:free",
+    label: "Gemma 4 31B",
     maxTokens: 4_096,
     reasoning: { max_tokens: 1_024, exclude: true },
     temperature: 0.25,
   },
   balanced: {
-    id: "nvidia/nemotron-3-super-120b-a12b:free",
-    label: "Nemotron 3 Super",
-    maxTokens: 3_200,
-    reasoning: { max_tokens: 768, exclude: true },
-    temperature: 0.3,
+    id: "google/gemma-4-31b-it:free",
+    label: "Gemma 4 31B",
+    maxTokens: 4_096,
+    reasoning: { max_tokens: 1_024, exclude: true },
+    temperature: 0.25,
   },
   language: {
     id: "google/gemma-4-31b-it:free",
     label: "Gemma 4 31B",
-    maxTokens: 3_200,
-    reasoning: null,
-    temperature: 0.45,
+    maxTokens: 4_096,
+    reasoning: { max_tokens: 1_024, exclude: true },
+    temperature: 0.25,
+  },
+  fallback: {
+    id: "nvidia/nemotron-3-super-120b-a12b:free",
+    label: "Nemotron 3 Super",
+    maxTokens: 4_096,
+    reasoning: { max_tokens: 768, exclude: true },
+    temperature: 0.25,
   },
 } as const;
 
@@ -51,20 +58,6 @@ export function selectAIModel(input: RoutingInput): AIModelConfig {
 
 export function getAIModelCandidates(input: RoutingInput): AIModelConfig[] {
   const primary = selectAIModel(input);
-  const secondary =
-    primary.id === AI_MODELS.balanced.id
-      ? AI_MODELS.reasoning
-      : AI_MODELS.balanced;
-  return [primary, secondary];
-}
-
-export function aiProviderLabel(provider: string): string {
-  if (provider === "deterministic-fallback") return "Safe fallback mode";
-  const modelId = provider.startsWith("openrouter:")
-    ? provider.slice("openrouter:".length)
-    : provider;
-  const match = Object.values(AI_MODELS).find((model) => model.id === modelId);
-  return match
-    ? `OpenRouter · ${match.label}`
-    : "OpenRouter · Subject-matched model";
+  const secondary = AI_MODELS.fallback;
+  return primary.id === secondary.id ? [primary] : [primary, secondary];
 }

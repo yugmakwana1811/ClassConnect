@@ -21,7 +21,7 @@ export function LoadingScreen({
             <Sparkles size={22} strokeWidth={2.2} />
           </span>
           <span className="loading-brand-name">
-            EduGrade <em>AI</em>
+            ClassConnect
           </span>
         </div>
 
@@ -42,7 +42,7 @@ export function LoadingScreen({
         <div className="loading-progress" aria-hidden="true">
           <span />
         </div>
-        <span className="sr-only">Loading EduGrade AI. Please wait.</span>
+        <span className="sr-only">Loading ClassConnect. Please wait.</span>
       </div>
     </div>
   );

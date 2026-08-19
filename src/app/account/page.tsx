@@ -1,10 +1,23 @@
 import Link from "next/link";
-import { ChevronRight, KeyRound, MailCheck, UserRound } from "lucide-react";
+import {
+  ChevronRight,
+  HeartHandshake,
+  KeyRound,
+  MailCheck,
+  RefreshCw,
+  UserRound,
+  UserX,
+} from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { Alert, PageHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { GradeSelect } from "@/components/education-selects";
 import { updateAccountAction } from "@/app/account-actions";
+import {
+  regenerateParentAccessCodeAction,
+  revokeParentAccessAction,
+} from "@/app/parent-actions";
 
 export default async function AccountPage({
   searchParams,
@@ -15,8 +28,20 @@ export default async function AccountPage({
     searchParams,
     requireUser(),
   ]);
+  const parentConnections =
+    user.role === "STUDENT"
+      ? await db.parentStudent.findMany({
+          where: { studentId: user.studentProfile!.id },
+          include: { parent: { include: { user: true } } },
+          orderBy: { linkedAt: "asc" },
+        })
+      : [];
   const profile =
-    user.role === "TEACHER" ? user.teacherProfile : user.studentProfile;
+    user.role === "TEACHER"
+      ? user.teacherProfile
+      : user.role === "STUDENT"
+        ? user.studentProfile
+        : user.parentProfile;
   return (
     <div className="page">
       <PageHeader
@@ -90,7 +115,7 @@ export default async function AccountPage({
                   maxLength={80}
                 />
               </label>
-            ) : (
+            ) : user.role === "STUDENT" ? (
               <div
                 style={{
                   display: "grid",
@@ -114,6 +139,18 @@ export default async function AccountPage({
                   />
                 </label>
               </div>
+            ) : (
+              <div
+                className="hint"
+                style={{
+                  padding: ".8rem",
+                  borderRadius: 10,
+                  background: "var(--teal-soft)",
+                }}
+              >
+                Student connections and family access are managed from the
+                parent workspace.
+              </div>
             )}
             <SubmitButton pendingText="Saving profile…">
               Save profile
@@ -121,6 +158,89 @@ export default async function AccountPage({
           </form>
         </section>
         <aside style={{ display: "grid", gap: "1rem" }}>
+          {user.role === "STUDENT" ? (
+            <section className="card card-pad">
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <HeartHandshake size={18} color="var(--teal)" />
+                <div className="eyebrow">Parent access</div>
+              </div>
+              <h2
+                className="display"
+                style={{ fontSize: "1.8rem", margin: ".3rem 0 .6rem" }}
+              >
+                Connect your family
+              </h2>
+              <p className="hint" style={{ lineHeight: 1.55 }}>
+                Share your sign-in email and this private code only with a
+                parent or guardian you trust.
+              </p>
+              <div
+                style={{
+                  padding: ".8rem",
+                  borderRadius: 10,
+                  background: "var(--teal-soft)",
+                  letterSpacing: ".14em",
+                  fontWeight: 900,
+                  textAlign: "center",
+                }}
+              >
+                {user.studentProfile!.parentAccessCode}
+              </div>
+              <form
+                action={regenerateParentAccessCodeAction}
+                style={{ marginTop: ".7rem" }}
+              >
+                <SubmitButton
+                  className="btn btn-secondary"
+                  pendingText="Generating…"
+                  confirmMessage="Generate a new parent access code? The current code will stop working, but existing parent connections will remain."
+                >
+                  <RefreshCw size={15} /> Generate a new code
+                </SubmitButton>
+              </form>
+              <div style={{ marginTop: "1rem" }}>
+                <strong style={{ fontSize: ".82rem" }}>
+                  Connected parents and guardians
+                </strong>
+                {parentConnections.length ? (
+                  parentConnections.map((connection) => (
+                    <div
+                      key={connection.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: ".6rem",
+                        padding: ".65rem 0",
+                        borderBottom: "1px solid var(--line)",
+                      }}
+                    >
+                      <span>
+                        <strong style={{ fontSize: ".82rem" }}>
+                          {connection.parent.user.name}
+                        </strong>
+                        <span className="hint" style={{ display: "block" }}>
+                          {connection.relationship || "Parent or guardian"}
+                        </span>
+                      </span>
+                      <form action={revokeParentAccessAction}>
+                        <input type="hidden" name="id" value={connection.id} />
+                        <SubmitButton
+                          className="btn btn-danger"
+                          pendingText="Revoking…"
+                          confirmMessage={`Remove access for ${connection.parent.user.name}?`}
+                        >
+                          <UserX size={14} /> Revoke
+                        </SubmitButton>
+                      </form>
+                    </div>
+                  ))
+                ) : (
+                  <p className="hint">No parent accounts are connected yet.</p>
+                )}
+              </div>
+            </section>
+          ) : null}
           <Link
             href="/account/email"
             className="card card-pad"

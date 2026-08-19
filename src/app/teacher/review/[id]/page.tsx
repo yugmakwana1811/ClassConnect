@@ -6,9 +6,9 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Alert, PageHeader, SafetyNote } from "@/components/ui";
 import { formatDateTime } from "@/lib/utils";
-import { generateFeedbackAction, saveReviewAction } from "@/app/actions";
-import { SubmitButton } from "@/components/submit-button";
+import { saveReviewAction } from "@/app/actions";
 import { ReviewSubmit } from "@/components/review-submit";
+import { AIFeedbackStream } from "@/components/ai-feedback-stream";
 export default async function ReviewDetail({
   params,
   searchParams,
@@ -142,15 +142,7 @@ export default async function ReviewDetail({
                 before approval.
               </p>
             ) : (
-              <form action={generateFeedbackAction}>
-                <input type="hidden" name="submissionId" value={s.id} />
-                <SubmitButton
-                  className="btn btn-secondary"
-                  pendingText="Drafting feedback…"
-                >
-                  <Sparkles size={16} /> Generate suggestion
-                </SubmitButton>
-              </form>
+              <AIFeedbackStream key="new" submissionId={s.id} />
             )}
             <form
               action={saveReviewAction}

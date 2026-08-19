@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { learningStreak, topicPerformance } from "@/lib/analytics";
 import { PageHeader, StatCard } from "@/components/ui";
+import { PdfActions } from "@/components/pdf-actions";
 
 export default async function StudentAnalytics() {
   const user = await requireUser("STUDENT");
@@ -17,18 +18,29 @@ export default async function StudentAnalytics() {
   const [assignments, submissions, attempts, activities] = await Promise.all([
     db.assignment.findMany({
       where: {
-        status: "PUBLISHED",
+        status: { not: "DRAFT" },
         class: { enrollments: { some: { studentId } } },
       },
+      select: { id: true },
     }),
     db.submission.findMany({
-      where: { studentId },
-      include: { assignment: true, result: true },
+      where: { studentId, assignment: { status: { not: "DRAFT" } } },
+      select: {
+        status: true,
+        updatedAt: true,
+        assignment: {
+          select: { maxMarks: true, topic: true, title: true },
+        },
+        result: { select: { marks: true, published: true } },
+      },
       orderBy: { updatedAt: "asc" },
     }),
     db.quizAttempt.findMany({
       where: { studentId },
-      include: { quiz: { include: { questions: true } } },
+      select: {
+        score: true,
+        quiz: { select: { questions: { select: { marks: true } } } },
+      },
     }),
     db.activityLog.findMany({
       where: { userId: user.id },
@@ -84,6 +96,13 @@ export default async function StudentAnalytics() {
         title="Use evidence to revise smarter"
         description="Progress is more than one mark. These patterns come from your own published results, quiz attempts, completion, and learning activity."
       />
+      <div className="card card-pad" style={{ marginBottom: "1rem" }}>
+        <div className="eyebrow">My progress report</div>
+        <PdfActions
+          label="My progress report"
+          studentUrl={`/api/pdfs/report/${studentId}`}
+        />
+      </div>
       <div className="grid-auto">
         <StatCard
           label="Average score"

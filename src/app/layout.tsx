@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: { default: "EduGrade AI", template: "%s · EduGrade AI" },
-  description: "Smart Teaching. Faster Feedback. Better Learning.",
-  applicationName: "EduGrade AI",
+  metadataBase: new URL(siteUrl),
+  title: { default: "ClassConnect", template: "%s · ClassConnect" },
+  description: "Connecting the classroom beyond the classroom.",
+  applicationName: "ClassConnect",
+  openGraph: {
+    type: "website",
+    siteName: "ClassConnect",
+    title: "ClassConnect",
+    description: "Connecting the classroom beyond the classroom.",
+  },
 };
 export default function RootLayout({
   children,

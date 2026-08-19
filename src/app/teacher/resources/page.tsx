@@ -5,6 +5,8 @@ import { Alert, EmptyState, PageHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { deleteResourceAction, uploadResourceAction } from "@/app/actions";
 import { formatDate } from "@/lib/utils";
+import { PdfActions } from "@/components/pdf-actions";
+import { DEMO_GENERATED_PDF_PREFIX } from "@/lib/demo-catalog";
 export default async function Resources({
   searchParams,
 }: {
@@ -76,6 +78,12 @@ export default async function Resources({
                         {r.description}
                       </p>
                     )}
+                    {r.url.startsWith(DEMO_GENERATED_PDF_PREFIX) ? (
+                      <PdfActions
+                        label={r.title}
+                        studentUrl={`/api/pdfs/resource/${r.id}`}
+                      />
+                    ) : null}
                   </div>
                   <div style={{ display: "flex", gap: ".45rem" }}>
                     <a

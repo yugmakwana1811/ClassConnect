@@ -4,13 +4,19 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { createSession, destroySession, requireUser } from "@/lib/auth";
+import {
+  createSession,
+  destroySession,
+  homeForRole,
+  requireUser,
+} from "@/lib/auth";
 import {
   aiSchema,
   announcementSchema,
   assignmentSchema,
   attendanceDateSchema,
   attendanceStatusSchema,
+  classNameSchema,
   classSchema,
   generatedContentSchema,
   joinClassSchema,
@@ -28,12 +34,18 @@ import {
   verifyPrivateUpload,
 } from "@/lib/storage";
 import type { AIContentType } from "@prisma/client";
+import { submissionUploadPrefix } from "@/lib/submission-path";
 import {
   assertAuthAllowed,
   authThrottleKey,
   clearAuthFailures,
   recordAuthFailure,
 } from "@/lib/auth-throttle";
+import { createClassCode } from "@/lib/class-code";
+import {
+  UserFacingError,
+  userFacingMessage,
+} from "@/lib/user-facing-error";
 
 const DUMMY_PASSWORD_HASH =
   "$2b$12$2gwD2filJ2VA7OTnAXsmYeuBOMe30gvzLn2EKcRFC34OEEzD75EoC";
@@ -44,20 +56,16 @@ function text(form: FormData, key: string) {
 function fail(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
-function messageOf(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : "Something went wrong. Please try again.";
+function revalidateTeacherWorkspace() {
+  revalidatePath("/teacher", "layout");
 }
-
+function revalidateStudentWorkspace() {
+  revalidatePath("/student", "layout");
+}
 async function uniqueClassCode() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
   do {
-    code = Array.from(
-      { length: 6 },
-      () => alphabet[Math.floor(Math.random() * alphabet.length)],
-    ).join("");
+    code = createClassCode();
   } while (await db.classRoom.findUnique({ where: { code } }));
   return code;
 }
@@ -89,7 +97,7 @@ export async function loginAction(form: FormData) {
     if (error instanceof Error && error.message.startsWith("Too many attempts"))
       fail("/login", error.message);
     console.error(
-      "[EduGrade] Login service failure",
+      "[ClassConnect] Login service failure",
       error instanceof Error ? error.message : "Unknown error",
     );
     fail(
@@ -103,15 +111,17 @@ export async function loginAction(form: FormData) {
     });
   } catch (error) {
     console.error(
-      "[EduGrade] Sign-in activity logging failed",
+      "[ClassConnect] Sign-in activity logging failed",
       error instanceof Error ? error.message : "Unknown error",
     );
   }
-  redirect(user.role === "TEACHER" ? "/teacher" : "/student");
+  revalidatePath("/", "layout");
+  redirect(homeForRole(user.role));
 }
 
 export async function logoutAction() {
   await destroySession();
+  revalidatePath("/", "layout");
   redirect("/login");
 }
 
@@ -140,6 +150,7 @@ export async function createClassAction(form: FormData) {
       entityId: classroom.id,
     },
   });
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${classroom.id}?success=Class created`);
 }
 
@@ -173,7 +184,115 @@ export async function updateClassAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${id}?success=Class updated`);
+}
+
+export async function renameClassAction(form: FormData) {
+  const user = await requireUser("TEACHER");
+  const id = text(form, "id");
+  const parsed = classNameSchema.safeParse(text(form, "name"));
+  if (!parsed.success)
+    fail(
+      "/teacher/classes",
+      parsed.error.issues[0]?.message ?? "Check the class name.",
+    );
+  const classroom = await db.classRoom.findFirst({
+    where: { id, teacherId: user.teacherProfile!.id },
+    select: { id: true },
+  });
+  if (!classroom) fail("/teacher/classes", "Class not found.");
+  await db.$transaction([
+    db.classRoom.update({ where: { id }, data: { name: parsed.data } }),
+    db.activityLog.create({
+      data: {
+        userId: user.id,
+        action: "Renamed class",
+        entityType: "ClassRoom",
+        entityId: id,
+      },
+    }),
+  ]);
+  revalidateTeacherWorkspace();
+  redirect("/teacher/classes?success=Class renamed");
+}
+
+export async function deleteClassAction(form: FormData) {
+  const user = await requireUser("TEACHER");
+  const id = text(form, "id");
+  const confirmation = text(form, "confirmName").trim();
+  const classroom = await db.classRoom.findFirst({
+    where: { id, teacherId: user.teacherProfile!.id },
+    select: {
+      id: true,
+      name: true,
+      resources: { select: { url: true } },
+      assignments: {
+        select: {
+          attachments: { select: { url: true } },
+          submissions: {
+            select: { pages: { select: { url: true } } },
+          },
+        },
+      },
+      _count: {
+        select: {
+          enrollments: true,
+          assignments: true,
+          quizzes: true,
+          resources: true,
+          announcements: true,
+          attendance: true,
+        },
+      },
+    },
+  });
+  if (!classroom) fail("/teacher/classes", "Class not found.");
+  if (confirmation !== classroom.name.trim())
+    fail(
+      "/teacher/classes",
+      `Type “${classroom.name.trim()}” exactly to delete this class.`,
+    );
+
+  const storedFiles = new Set([
+    ...classroom.resources.map((resource) => resource.url),
+    ...classroom.assignments.flatMap((assignment) => [
+      ...assignment.attachments.map((attachment) => attachment.url),
+      ...assignment.submissions.flatMap((submission) =>
+        submission.pages.map((page) => page.url),
+      ),
+    ]),
+  ]);
+
+  await db.$transaction([
+    db.classRoom.delete({ where: { id: classroom.id } }),
+    db.activityLog.create({
+      data: {
+        userId: user.id,
+        action: "Deleted class",
+        entityType: "ClassRoom",
+        entityId: classroom.id,
+        metadata: {
+          className: classroom.name,
+          ...classroom._count,
+        },
+      },
+    }),
+  ]);
+
+  const cleanup = await Promise.allSettled(
+    [...storedFiles].map((url) => deleteStoredFile(url)),
+  );
+  const failedCleanup = cleanup.filter(
+    (result) => result.status === "rejected",
+  );
+  if (failedCleanup.length)
+    console.error(
+      `[ClassConnect] ${failedCleanup.length} stored class file(s) could not be removed after deleting class ${classroom.id}.`,
+    );
+
+  revalidateTeacherWorkspace();
+  redirect("/teacher/classes?success=Class permanently deleted");
 }
 
 export async function regenerateClassCodeAction(form: FormData) {
@@ -196,6 +315,7 @@ export async function regenerateClassCodeAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${id}?success=New class code generated`);
 }
 
@@ -223,6 +343,7 @@ export async function removeEnrollmentAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
   redirect(`/teacher/classes/${classId}?success=Student removed from class`);
 }
 
@@ -257,6 +378,8 @@ export async function joinClassAction(form: FormData) {
       entityId: classroom.id,
     },
   });
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   redirect(`/student/classes/${classroom.id}?success=You joined the class`);
 }
 
@@ -285,47 +408,68 @@ export async function createAssignmentAction(form: FormData) {
     fail("/teacher/assignments/new", "You cannot add work to that class.");
   const file = form.get("attachment");
   let assignmentId = "";
+  let storedUrl: string | null = null;
   try {
-    const assignment = await db.assignment.create({
-      data: {
-        classId: parsed.data.classId,
-        title: parsed.data.title,
-        description: parsed.data.description,
-        instructions: parsed.data.instructions,
-        topic: parsed.data.topic,
-        type: parsed.data.type,
-        maxMarks: parsed.data.maxMarks,
-        dueAt: parsed.data.dueAt,
-        status: parsed.data.publish ? "PUBLISHED" : "DRAFT",
-      },
-    });
-    assignmentId = assignment.id;
     if (file instanceof File && file.size) {
       validateFile(file);
-      const url = await storeFile(file, "assignments");
-      await db.assignmentAttachment.create({
+      storedUrl = await storeFile(file, "assignments");
+    }
+    assignmentId = await db.$transaction(async (tx) => {
+      const assignment = await tx.assignment.create({
         data: {
-          assignmentId: assignment.id,
-          name: file.name,
-          url,
-          mimeType: file.type,
-          size: file.size,
+          classId: parsed.data.classId,
+          title: parsed.data.title,
+          description: parsed.data.description,
+          instructions: parsed.data.instructions,
+          topic: parsed.data.topic,
+          type: parsed.data.type,
+          maxMarks: parsed.data.maxMarks,
+          dueAt: parsed.data.dueAt,
+          status: parsed.data.publish ? "PUBLISHED" : "DRAFT",
         },
       });
-    }
-    await db.activityLog.create({
-      data: {
-        userId: user.id,
-        action: parsed.data.publish
-          ? "Published assignment"
-          : "Saved assignment draft",
-        entityType: "Assignment",
-        entityId: assignment.id,
-      },
+      if (storedUrl && file instanceof File)
+        await tx.assignmentAttachment.create({
+          data: {
+            assignmentId: assignment.id,
+            name: file.name,
+            url: storedUrl,
+            mimeType: file.type,
+            size: file.size,
+          },
+        });
+      await tx.activityLog.create({
+        data: {
+          userId: user.id,
+          action: parsed.data.publish
+            ? "Published assignment"
+            : "Saved assignment draft",
+          entityType: "Assignment",
+          entityId: assignment.id,
+        },
+      });
+      return assignment.id;
     });
   } catch (error) {
-    fail("/teacher/assignments/new", messageOf(error));
+    if (storedUrl)
+      try {
+        await deleteStoredFile(storedUrl);
+      } catch (cleanupError) {
+        console.error(
+          "[ClassConnect] Failed to clean up an incomplete assignment upload",
+          cleanupError instanceof Error ? cleanupError.message : "Unknown error",
+        );
+      }
+    console.error(
+      "[ClassConnect] Assignment creation failed",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    fail(
+      "/teacher/assignments/new",
+      userFacingMessage(error, "The assignment could not be saved. Try again."),
+    );
   }
+  revalidateTeacherWorkspace();
   redirect(`/teacher/assignments/${assignmentId}?success=Assignment saved`);
 }
 
@@ -344,7 +488,19 @@ export async function publishAssignmentAction(form: FormData) {
       "/teacher/assignments",
       "The assignment was not found or is already published.",
     );
-  await db.assignment.update({ where: { id }, data: { status: "PUBLISHED" } });
+  await db.$transaction([
+    db.assignment.update({ where: { id }, data: { status: "PUBLISHED" } }),
+    db.activityLog.create({
+      data: {
+        userId: user.id,
+        action: "Published assignment",
+        entityType: "Assignment",
+        entityId: id,
+      },
+    }),
+  ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(`/teacher/assignments/${id}?success=Assignment published`);
 }
 
@@ -412,6 +568,8 @@ export async function updateAssignmentAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(`/teacher/assignments/${id}?success=Assignment updated`);
 }
 
@@ -442,11 +600,15 @@ export async function closeAssignmentAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(`/teacher/assignments/${id}?success=Assignment closed`);
 }
 
 export async function generateContentAction(form: FormData) {
   const user = await requireUser();
+  if (user.role === "PARENT")
+    fail("/parent", "AI generation is available in teacher and student workspaces.");
   const parsed = aiSchema.safeParse({
     type: text(form, "type"),
     topic: text(form, "topic"),
@@ -490,11 +652,14 @@ export async function generateContentAction(form: FormData) {
       entityId: record.id,
     },
   });
+  revalidatePath(base);
   redirect(`${base}?generation=${record.id}`);
 }
 
 export async function saveGeneratedContentAction(form: FormData) {
   const user = await requireUser();
+  if (user.role === "PARENT")
+    fail("/parent", "AI generation is available in teacher and student workspaces.");
   const parsed = generatedContentSchema.safeParse({
     id: text(form, "id"),
     output: text(form, "output"),
@@ -541,6 +706,8 @@ export async function createAnnouncementAction(form: FormData) {
   });
   if (!owns) fail("/teacher/announcements", "Class not found.");
   await db.announcement.create({ data: { ...parsed.data, authorId: user.id } });
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/announcements?success=Announcement sent");
 }
 
@@ -563,6 +730,8 @@ export async function deleteAnnouncementAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/announcements?success=Announcement deleted");
 }
 
@@ -586,15 +755,49 @@ export async function uploadResourceAction(form: FormData) {
     where: { id: parsed.data.classId, teacherId: user.teacherProfile!.id },
   });
   if (!owns) fail("/teacher/resources", "Class not found.");
+  let storedUrl: string | null = null;
   try {
     validateFile(file);
-    const url = await storeFile(file, "resources");
-    await db.resource.create({
-      data: { ...parsed.data, url, mimeType: file.type, size: file.size },
+    storedUrl = await storeFile(file, "resources");
+    await db.$transaction(async (tx) => {
+      const resource = await tx.resource.create({
+        data: {
+          ...parsed.data,
+          url: storedUrl!,
+          mimeType: file.type,
+          size: file.size,
+        },
+      });
+      await tx.activityLog.create({
+        data: {
+          userId: user.id,
+          action: "Uploaded resource",
+          entityType: "Resource",
+          entityId: resource.id,
+        },
+      });
     });
   } catch (error) {
-    fail("/teacher/resources", messageOf(error));
+    if (storedUrl)
+      try {
+        await deleteStoredFile(storedUrl);
+      } catch (cleanupError) {
+        console.error(
+          "[ClassConnect] Failed to clean up an incomplete resource upload",
+          cleanupError instanceof Error ? cleanupError.message : "Unknown error",
+        );
+      }
+    console.error(
+      "[ClassConnect] Resource upload failed",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    fail(
+      "/teacher/resources",
+      userFacingMessage(error, "The resource could not be uploaded. Try again."),
+    );
   }
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/resources?success=Resource uploaded");
 }
 
@@ -607,7 +810,6 @@ export async function deleteResourceAction(form: FormData) {
   });
   if (!resource) fail("/teacher/resources", "Resource not found.");
   try {
-    await deleteStoredFile(resource.url);
     await db.$transaction([
       db.resource.delete({ where: { id } }),
       db.activityLog.create({
@@ -620,8 +822,22 @@ export async function deleteResourceAction(form: FormData) {
       }),
     ]);
   } catch (error) {
-    fail("/teacher/resources", messageOf(error));
+    console.error(
+      "[ClassConnect] Resource deletion failed",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    fail("/teacher/resources", "The resource could not be deleted. Try again.");
   }
+  try {
+    await deleteStoredFile(resource.url);
+  } catch (error) {
+    console.error(
+      `[ClassConnect] Stored file could not be removed after deleting resource ${id}`,
+      error instanceof Error ? error.message : "Unknown error",
+    );
+  }
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/resources?success=Resource deleted");
 }
 
@@ -686,7 +902,7 @@ export async function submitWorkAction(form: FormData) {
     for (const page of pagesResult.data) {
       const metadata = await verifyPrivateUpload(
         page.url,
-        `submissions/${assignmentId}/`,
+        submissionUploadPrefix(assignmentId, user.id),
         true,
       );
       uploaded.push({
@@ -714,7 +930,7 @@ export async function submitWorkAction(form: FormData) {
           data: { note, status: "SUBMITTED", submittedAt: new Date() },
         });
         if (claimed.count !== 1)
-          throw new Error(
+          throw new UserFacingError(
             "This submission is already with your teacher and cannot be replaced.",
           );
         submissionId = existing.id;
@@ -746,8 +962,20 @@ export async function submitWorkAction(form: FormData) {
       });
     });
   } catch (error) {
-    return { ok: false as const, error: messageOf(error) };
+    console.error(
+      "[ClassConnect] Submission finalization failed",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    return {
+      ok: false as const,
+      error: userFacingMessage(
+        error,
+        "The submission could not be finalized. Refresh and try again.",
+      ),
+    };
   }
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   return { ok: true as const };
 }
 
@@ -856,6 +1084,8 @@ export async function saveReviewAction(form: FormData) {
       },
     }),
   ]);
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect(
     `/teacher/review/${submission.id}?success=${parsed.data.publish ? "Result published" : "Review saved"}`,
   );
@@ -904,12 +1134,18 @@ export async function markAttendanceAction(form: FormData) {
       }),
     ),
   );
+  revalidateTeacherWorkspace();
+  revalidateStudentWorkspace();
   redirect("/teacher/attendance?success=Attendance saved");
 }
 
 export async function submitQuizAction(form: FormData) {
   const user = await requireUser("STUDENT");
   const quizId = text(form, "quizId");
+  const lockdownViolations = Math.min(
+    100,
+    Math.max(0, Number.parseInt(text(form, "lockdownViolations"), 10) || 0),
+  );
   const quiz = await db.quiz.findFirst({
     where: {
       id: quizId,
@@ -954,8 +1190,10 @@ export async function submitQuizAction(form: FormData) {
       action: "Completed quiz",
       entityType: "QuizAttempt",
       entityId: attempt.id,
-      metadata: { score, max },
+      metadata: { score, max, lockdownViolations },
     },
   });
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   redirect(`/student/quizzes/${quiz.id}?attempt=${attempt.id}`);
 }

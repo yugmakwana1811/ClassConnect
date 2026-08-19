@@ -15,6 +15,9 @@ import { Alert, EmptyState, PageHeader } from "@/components/ui";
 import { formatDateTime } from "@/lib/utils";
 import { closeAssignmentAction, publishAssignmentAction } from "@/app/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { PdfActions } from "@/components/pdf-actions";
+import { DEMO_GENERATED_PDF_PREFIX } from "@/lib/demo-catalog";
+import { submissionStatusLabel } from "@/lib/workflow-status";
 export default async function AssignmentDetail({
   params,
   searchParams,
@@ -151,7 +154,7 @@ export default async function AssignmentDetail({
                   <span
                     className={`badge ${s.status === "SUBMITTED" ? "badge-coral" : "badge-teal"}`}
                   >
-                    {s.status.toLowerCase()}
+                    {submissionStatusLabel(s, a.dueAt)}
                   </span>
                   <Eye size={17} />
                 </div>
@@ -199,7 +202,9 @@ export default async function AssignmentDetail({
               </p>
             </>
           )}
-          {a.attachments.map((f) => (
+          {a.attachments
+            .filter((f) => !f.url.startsWith(DEMO_GENERATED_PDF_PREFIX))
+            .map((f) => (
             <a
               key={f.id}
               href={`/api/files/assignment/${f.id}`}
@@ -211,6 +216,11 @@ export default async function AssignmentDetail({
               <Download size={16} /> {f.name}
             </a>
           ))}
+          <PdfActions
+            label={a.title}
+            studentUrl={`/api/pdfs/assignment/${a.id}`}
+            teacherUrl={`/api/pdfs/assignment/${a.id}?variant=teacher`}
+          />
         </aside>
       </div>
     </div>

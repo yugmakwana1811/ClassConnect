@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowLeft,
   Database,
@@ -8,6 +9,13 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SafetyNote } from "@/components/ui";
+
+export const metadata: Metadata = {
+  title: "Product information and AI safety",
+  description:
+    "How ClassConnect protects classroom work, keeps teachers in control, and uses AI responsibly.",
+  alternates: { canonical: "/about" },
+};
 export default function About() {
   return (
     <main>
@@ -24,7 +32,7 @@ export default function About() {
       >
         <Logo />
         <Link href="/login" className="btn btn-primary">
-          Open EduGrade
+          Open ClassConnect
         </Link>
       </header>
       <div
@@ -46,7 +54,7 @@ export default function About() {
           <ArrowLeft size={16} /> Home
         </Link>
         <div className="eyebrow" style={{ marginTop: "2.5rem" }}>
-          About EduGrade AI
+          About ClassConnect
         </div>
         <h1
           className="display"
@@ -66,7 +74,7 @@ export default function About() {
             maxWidth: 800,
           }}
         >
-          EduGrade AI is an AI-powered teacher assistant and classroom platform
+          ClassConnect is an AI-powered teacher assistant and classroom platform
           for CBSE Classes 6–12, designed around the complete teaching
           cycle—not only evaluation. It helps teachers plan, teach, assign,
           collect, review, support, communicate, and analyse while keeping
@@ -121,7 +129,7 @@ export default function About() {
           Built to solve real classroom problems.
         </h2>
         <p style={{ color: "var(--muted)", lineHeight: 1.8 }}>
-          EduGrade AI is a real-world application that connects teacher
+          ClassConnect is a real-world application that connects teacher
           planning, classroom content, assignments, handwritten student
           responses, review, feedback, results, communication, and progress
           insights in one protected workflow. No AI output is silently

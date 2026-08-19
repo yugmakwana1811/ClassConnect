@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +27,6 @@ export function HoverExpand({
   className,
 }: HoverExpandProps) {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
-  const reduceMotion = useReducedMotion();
 
   return (
     <div className={cn("hover-expand", className)}>
@@ -37,30 +35,16 @@ export function HoverExpand({
         const isMuted = activeIndex !== null && !isActive;
 
         return (
-          <motion.button
+          <button
             className="hover-expand-item"
             type="button"
             key={item.label}
             aria-expanded={isActive}
             aria-label={`${item.label}${item.description ? `: ${item.description}` : ""}`}
-            animate={{
+            style={{
               height: isActive ? expandedHeight : collapsedHeight,
               opacity: isMuted ? 0.48 : 1,
             }}
-            initial={false}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : {
-                    height: {
-                      type: "spring",
-                      stiffness: 280,
-                      damping: 32,
-                      mass: 0.9,
-                    },
-                    opacity: { duration: 0.2, ease: "easeOut" },
-                  }
-            }
             onMouseEnter={() => setActiveIndex(index)}
             onMouseLeave={(event) => {
               if (document.activeElement !== event.currentTarget) {
@@ -71,25 +55,13 @@ export function HoverExpand({
             onBlur={() => setActiveIndex(null)}
             onClick={() => setActiveIndex(index)}
           >
-            <motion.span
+            <span
               className="hover-expand-image"
               aria-hidden="true"
-              animate={{
+              style={{
                 opacity: isActive ? 1 : 0,
-                scale: isActive ? 1 : 1.045,
+                transform: `scale(${isActive ? 1 : 1.045})`,
               }}
-              initial={false}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      opacity: { duration: 0.38, ease: "easeOut" },
-                      scale: {
-                        duration: 0.52,
-                        ease: [0.23, 1, 0.32, 1],
-                      },
-                    }
-              }
             >
               <Image
                 src={item.image}
@@ -99,51 +71,47 @@ export function HoverExpand({
                 sizes="(max-width: 768px) 100vw, 1200px"
               />
               <span className="hover-expand-shade" />
-            </motion.span>
+            </span>
 
             <span className="hover-expand-content">
               <span className="hover-expand-main">
-                <motion.span
+                <span
                   className="hover-expand-number"
-                  animate={{ color: isActive ? "#ffffff" : "var(--muted)" }}
+                  style={{ color: isActive ? "#ffffff" : "var(--muted)" }}
                 >
                   {String(index + 1).padStart(2, "0")}
-                </motion.span>
-                <motion.span
+                </span>
+                <span
                   className="hover-expand-label"
-                  animate={{ color: isActive ? "#ffffff" : "var(--ink)" }}
+                  style={{ color: isActive ? "#ffffff" : "var(--ink)" }}
                 >
                   {item.label}
-                </motion.span>
+                </span>
                 {item.description ? (
-                  <motion.span
+                  <span
                     className="hover-expand-description"
-                    animate={{
+                    style={{
                       opacity: isActive ? 1 : 0,
-                      x: isActive ? 0 : -8,
-                    }}
-                    initial={false}
-                    transition={{
-                      duration: reduceMotion ? 0 : 0.28,
-                      delay: isActive && !reduceMotion ? 0.1 : 0,
+                      transform: `translateX(${isActive ? 0 : -8}px)`,
+                      transitionDelay: isActive ? "0.1s" : "0s",
                     }}
                   >
                     — {item.description}
-                  </motion.span>
+                  </span>
                 ) : null}
               </span>
 
-              <motion.span
+              <span
                 className="hover-expand-meta"
-                animate={{
+                style={{
                   color: isActive ? "rgba(255,255,255,.82)" : "var(--muted)",
                 }}
               >
                 {item.sublabel}
                 <ArrowUpRight size={15} aria-hidden="true" />
-              </motion.span>
+              </span>
             </span>
-          </motion.button>
+          </button>
         );
       })}
     </div>

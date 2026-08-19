@@ -22,7 +22,10 @@ const normalizedEmail = z
 
 export const loginSchema = z.object({
   email: normalizedEmail,
-  password: z.string().min(8, "Password must contain at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Password must contain at least 8 characters")
+    .max(128, "Password is too long"),
 });
 const strongPassword = z
   .string()
@@ -38,7 +41,7 @@ export const registerSchema = z
     email: normalizedEmail,
     password: strongPassword,
     confirmPassword: z.string(),
-    role: z.enum(["TEACHER", "STUDENT"]),
+    role: z.enum(["TEACHER", "STUDENT", "PARENT"]),
     school: z.string().trim().max(120).optional(),
     subject: z.string().trim().max(80).optional(),
     grade: optionalGradeSchema,
@@ -63,6 +66,18 @@ export const accountSchema = z.object({
   grade: optionalGradeSchema,
   rollNumber: z.string().trim().max(30).optional(),
 });
+export const parentStudentLinkSchema = z.object({
+  studentEmail: normalizedEmail,
+  accessCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(
+      /^[A-HJ-NP-Z2-9]{10}$/,
+      "Enter the student's 10-character parent access code",
+    ),
+  relationship: z.string().trim().max(50).optional(),
+});
 export const emailChangeSchema = z
   .object({
     newEmail: normalizedEmail,
@@ -78,7 +93,10 @@ export const emailChangeSchema = z
   });
 export const passwordChangeSchema = z
   .object({
-    currentPassword: z.string().min(1, "Enter your current password"),
+    currentPassword: z
+      .string()
+      .min(1, "Enter your current password")
+      .max(128, "Password is too long"),
     newPassword: strongPassword,
     confirmPassword: z.string(),
   })
@@ -90,11 +108,16 @@ export const passwordChangeSchema = z
     message: "Choose a password different from your current password",
     path: ["newPassword"],
   });
+export const classNameSchema = z
+  .string()
+  .trim()
+  .min(3, "Class name must contain at least 3 characters")
+  .max(80, "Class name must contain no more than 80 characters");
 export const classSchema = z.object({
-  name: z.string().min(3).max(80),
-  subject: z.string().min(2).max(80),
+  name: classNameSchema,
+  subject: z.string().trim().min(2).max(80),
   grade: requiredGradeSchema,
-  description: z.string().max(300).optional(),
+  description: z.string().trim().max(300).optional(),
 });
 export const joinClassSchema = z.object({
   code: z
@@ -109,7 +132,15 @@ export const assignmentSchema = z.object({
   description: z.string().min(10).max(2000),
   instructions: z.string().max(2000).optional(),
   topic: z.string().trim().min(2).max(120),
-  type: z.enum(["Assignment", "Homework", "Test", "Worksheet", "Practice"]),
+  type: z.enum([
+    "Assignment",
+    "Homework",
+    "Test",
+    "Worksheet",
+    "Practice",
+    "Project",
+    "Classwork",
+  ]),
   maxMarks: z.coerce.number().int().min(1).max(500),
   dueAt: z
     .string()

@@ -1,8 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Alert } from "@/components/ui";
 import { RegisterForm } from "@/components/register-form";
+
+export const metadata: Metadata = {
+  title: "Create account",
+  robots: { index: false, follow: false },
+};
 
 export default async function RegisterPage({
   searchParams,
@@ -21,7 +27,7 @@ export default async function RegisterPage({
         </div>
         <div className="auth-form-wrap auth-form-wrap-wide">
           <div className="eyebrow">Create account</div>
-          <h1 className="display auth-title">Build your EduGrade workspace</h1>
+          <h1 className="display auth-title">Build your ClassConnect workspace</h1>
           <p className="auth-description">
             Choose your role carefully. It controls which classroom data and
             actions your account can access.
@@ -46,10 +52,10 @@ export default async function RegisterPage({
         <div className="auth-aside-index">02 / CREATE</div>
         <div>
           <div className="eyebrow">Your secure workspace</div>
-          <h2 className="display">Start teaching or learning with less friction.</h2>
+          <h2 className="display">Keep teaching, learning, and family support connected.</h2>
           <div className="auth-benefits">
             {[
-              "Role-protected teacher and student workspaces",
+              "Role-protected teacher, student, and parent workspaces",
               "Private classroom resources and submissions",
               "Teacher-controlled AI suggestions",
             ].map((item) => (

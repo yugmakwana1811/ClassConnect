@@ -1,14 +1,22 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowLeft,
   CheckCircle2,
   GraduationCap,
+  HeartHandshake,
   ShieldCheck,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Alert } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
+import { PasswordField } from "@/components/password-field";
 import { loginAction } from "@/app/actions";
+
+export const metadata: Metadata = {
+  title: "Sign in",
+  robots: { index: false, follow: false },
+};
 
 export default async function Login({
   searchParams,
@@ -29,7 +37,7 @@ export default async function Login({
           <div className="eyebrow">Welcome back</div>
           <h1 className="display auth-title">Open your workspace</h1>
           <p className="auth-description">
-            Sign in to your protected teacher or student workspace.
+            Sign in to your protected teacher, student, or parent workspace.
           </p>
           <Alert error={error} />
           <form action={loginAction} className="auth-form">
@@ -43,17 +51,13 @@ export default async function Login({
                 required
               />
             </label>
-            <label>
-              <span className="label">Password</span>
-              <input
-                className="field"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                minLength={8}
-                required
-              />
-            </label>
+            <PasswordField
+              label="Password"
+              name="password"
+              autoComplete="current-password"
+              minLength={8}
+              required
+            />
             <SubmitButton pendingText="Opening workspace…">
               Sign in securely
             </SubmitButton>
@@ -64,7 +68,10 @@ export default async function Login({
             </summary>
             <div
               className="grid-auto"
-              style={{ marginTop: ".8rem", gridTemplateColumns: "1fr 1fr" }}
+              style={{
+                marginTop: ".8rem",
+                gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
+              }}
             >
               <div
                 className="card"
@@ -98,18 +105,34 @@ export default async function Login({
                 </strong>
                 <small className="hint">student@edugrade.ai</small>
               </div>
+              <div
+                className="card"
+                style={{ padding: ".8rem", background: "var(--gold-soft)" }}
+              >
+                <HeartHandshake size={18} color="var(--gold)" />
+                <strong
+                  style={{
+                    display: "block",
+                    fontSize: ".8rem",
+                    marginTop: ".3rem",
+                  }}
+                >
+                  Parent preview
+                </strong>
+                <small className="hint">parent@edugrade.ai</small>
+              </div>
               <small className="hint" style={{ gridColumn: "1 / -1" }}>
                 Preview password: EduGrade@123
               </small>
             </div>
           </details>
           <p className="hint auth-footnote">
-            New to EduGrade?{" "}
+            New to ClassConnect?{" "}
             <Link
               href="/register"
               style={{ color: "var(--teal)", fontWeight: 800 }}
             >
-              Create a teacher or student account
+              Create a teacher, student, or parent account
             </Link>
           </p>
           <p className="hint auth-footnote auth-security-copy">

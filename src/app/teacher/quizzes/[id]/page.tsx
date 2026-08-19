@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { Alert, PageHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { deleteQuizAction, publishQuizAction } from "@/app/quiz-actions";
+import { PdfActions } from "@/components/pdf-actions";
 
 export default async function TeacherQuizDetail({
   params,
@@ -147,6 +148,11 @@ export default async function TeacherQuizDetail({
                 </SubmitButton>
               </form>
             )}
+            <PdfActions
+              label={quiz.title}
+              studentUrl={`/api/pdfs/quiz/${quiz.id}`}
+              teacherUrl={`/api/pdfs/quiz/${quiz.id}?variant=teacher`}
+            />
           </section>
           <section className="card card-pad">
             <div className="eyebrow">Recent attempts</div>

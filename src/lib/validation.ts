@@ -22,7 +22,10 @@ const normalizedEmail = z
 
 export const loginSchema = z.object({
   email: normalizedEmail,
-  password: z.string().min(8, "Password must contain at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Password must contain at least 8 characters")
+    .max(128, "Password is too long"),
 });
 const strongPassword = z
   .string()
@@ -90,7 +93,10 @@ export const emailChangeSchema = z
   });
 export const passwordChangeSchema = z
   .object({
-    currentPassword: z.string().min(1, "Enter your current password"),
+    currentPassword: z
+      .string()
+      .min(1, "Enter your current password")
+      .max(128, "Password is too long"),
     newPassword: strongPassword,
     confirmPassword: z.string(),
   })

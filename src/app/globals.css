@@ -107,6 +107,91 @@
   }
 }
 
+/* Complete mobile workspace navigation. The bottom bar keeps the four most
+   frequent routes visible and exposes every remaining module in a native
+   modal sheet instead of truncating the navigation array. */
+.mobile-more-trigger {
+  display: none;
+}
+
+.mobile-more-dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.mobile-more-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(2px);
+}
+
+.mobile-more-sheet {
+  position: absolute;
+  right: 0;
+  bottom: calc(69px + env(safe-area-inset-bottom));
+  left: 0;
+  max-height: min(72svh, 620px);
+  overflow-y: auto;
+  padding: 1rem 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  box-shadow: 0 -22px 60px rgba(15, 23, 42, 0.2);
+  overscroll-behavior: contain;
+}
+
+.mobile-more-sheet > header {
+  position: sticky;
+  z-index: 1;
+  top: -1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -1rem -1rem 0.8rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.mobile-more-sheet > header strong {
+  display: block;
+  margin-top: 0.16rem;
+  font-size: 1.05rem;
+}
+
+.mobile-more-content,
+.mobile-more-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mobile-more-content {
+  gap: 1rem;
+}
+
+.mobile-more-account {
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.mobile-more-account form,
+.mobile-more-account button {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-more-dialog::backdrop {
+    backdrop-filter: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -194,6 +279,8 @@ button:disabled {
 }
 
 .brand-logo {
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
@@ -567,8 +654,8 @@ button:focus-visible {
 }
 
 .icon-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: 0;
@@ -937,6 +1024,19 @@ textarea.field {
 
 .table-wrap {
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 860px) {
+  .table-wrap table {
+    min-width: 640px;
+  }
 }
 
 table {
@@ -2175,7 +2275,7 @@ tbody tr:last-child td {
 
 .class-card-actions > .btn,
 .class-card-options > summary {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.55rem 0.75rem;
   font-size: 0.75rem;
 }
@@ -4167,9 +4267,11 @@ body > main[style*="grid-template-columns"] .display {
 }
 
 .auth-back-link {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 0.38rem;
+  padding-inline: 0.35rem;
   color: var(--muted);
   font-size: 0.78rem;
 }
@@ -4212,15 +4314,15 @@ body > main[style*="grid-template-columns"] .display {
 }
 
 .password-field-control .field {
-  padding-right: 3.1rem;
+  padding-right: 3.45rem;
 }
 
 .password-visibility-button {
   position: absolute;
   top: 50%;
   right: 0.55rem;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   display: grid;
   place-items: center;
   padding: 0;
@@ -7214,6 +7316,15 @@ a.card:active {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .review-assignment-actions .btn {
+    min-height: 44px;
+  }
+
+  .review-assignment-open {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 @keyframes navigation-highlight {
@@ -7309,5 +7420,134 @@ a.card:active {
   tbody tr,
   tbody td {
     transition: none !important;
+  }
+}
+
+/* Final mobile workspace override. Keep this after all theme layers. */
+@media (max-width: 860px) {
+  .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    justify-content: stretch;
+    gap: 0.15rem;
+  }
+
+  .mobile-nav[data-items="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mobile-nav > .floating-tooltip {
+    width: 100%;
+    min-width: 0;
+    display: block;
+  }
+
+  .mobile-nav > .floating-tooltip > .nav-link {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mobile-nav .nav-link > span:last-child,
+  .mobile-more-trigger > span:last-child {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-more-trigger {
+    min-width: 0;
+    min-height: 52px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.12rem;
+    padding: 0.28rem;
+    border: 0;
+    border-radius: 9px;
+    color: #6a7587;
+    background: transparent;
+    font: inherit;
+    font-size: 0.62rem;
+    font-weight: 670;
+    line-height: 1.1;
+    cursor: pointer;
+  }
+
+  .mobile-more-trigger[aria-current="page"],
+  .mobile-more-trigger[aria-expanded="true"] {
+    color: var(--indigo);
+    background: var(--indigo-soft);
+  }
+
+  .mobile-more-trigger:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .mobile-more-sheet .nav-group-label,
+  .mobile-more-sheet .nav-link > span:last-child {
+    display: block;
+  }
+
+  .mobile-more-sheet .floating-tooltip {
+    display: block;
+  }
+
+  .mobile-more-sheet .nav-link {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 0.65rem 0.7rem;
+    color: var(--ink-soft);
+    background: transparent;
+    font-size: 0.84rem;
+    text-align: left;
+  }
+
+  .mobile-more-sheet .nav-link[aria-current="page"] {
+    color: var(--indigo);
+    background: var(--indigo-soft);
+  }
+
+  .mobile-more-sheet .nav-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+  }
+
+  .mobile-more-sheet .icon-button {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+  }
+
+  .page,
+  .page > *,
+  .card,
+  .panel-head,
+  .page-head {
+    min-width: 0;
+  }
+
+  .page img,
+  .page video,
+  .page canvas {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .mobile-nav {
+    padding-inline: 0.3rem;
+  }
+
+  .mobile-nav .nav-link,
+  .mobile-more-trigger {
+    min-width: 0;
+    font-size: 0.58rem;
   }
 }

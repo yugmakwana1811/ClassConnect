@@ -462,7 +462,13 @@ export default async function ParentStudentProgressPage({
           </span>
         </div>
         {assessmentRows.length ? (
-          <div className="card table-wrap" style={{ border: 0 }}>
+          <div
+            className="card table-wrap"
+            role="region"
+            aria-label="Assessment history"
+            tabIndex={0}
+            style={{ border: 0 }}
+          >
             <table>
               <thead>
                 <tr>
@@ -516,7 +522,13 @@ export default async function ParentStudentProgressPage({
           </span>
         </div>
         {expectedAssignments.length ? (
-          <div className="card table-wrap" style={{ border: 0 }}>
+          <div
+            className="card table-wrap"
+            role="region"
+            aria-label="Upcoming work"
+            tabIndex={0}
+            style={{ border: 0 }}
+          >
             <table>
               <thead>
                 <tr>

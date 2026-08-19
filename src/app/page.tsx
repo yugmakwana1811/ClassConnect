@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowRight,
   BarChart3,
@@ -27,6 +28,10 @@ import {
   DeferredMotionAccordion,
   DeferredTextMorph,
 } from "@/components/deferred-marketing";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const cycle = [
   "Plan",

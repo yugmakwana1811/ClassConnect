@@ -59,7 +59,12 @@ export default async function Assignments() {
         />
       </div>
       {list.length ? (
-        <div className="card table-wrap">
+        <div
+          className="card table-wrap"
+          role="region"
+          aria-label="Assignment list"
+          tabIndex={0}
+        >
           <table>
             <thead>
               <tr>

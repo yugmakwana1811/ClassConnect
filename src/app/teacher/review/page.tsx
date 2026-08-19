@@ -162,7 +162,12 @@ export default async function ReviewQueue() {
                           </div>
                         </div>
 
-                        <div className="table-wrap">
+                        <div
+                          className="table-wrap"
+                          role="region"
+                          aria-label={`Submissions for ${assignment.title}`}
+                          tabIndex={0}
+                        >
                           <table>
                             <thead>
                               <tr>
@@ -246,7 +251,12 @@ export default async function ReviewQueue() {
               </span>
             </div>
             {quizAttempts.length ? (
-              <div className="card table-wrap">
+              <div
+                className="card table-wrap"
+                role="region"
+                aria-label="Quiz attempts"
+                tabIndex={0}
+              >
                 <table>
                   <thead>
                     <tr>

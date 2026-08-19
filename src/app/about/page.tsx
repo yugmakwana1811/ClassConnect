@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowLeft,
   Database,
@@ -8,6 +9,13 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SafetyNote } from "@/components/ui";
+
+export const metadata: Metadata = {
+  title: "Product information and AI safety",
+  description:
+    "How ClassConnect protects classroom work, keeps teachers in control, and uses AI responsibly.",
+  alternates: { canonical: "/about" },
+};
 export default function About() {
   return (
     <main>

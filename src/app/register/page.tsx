@@ -1,8 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Alert } from "@/components/ui";
 import { RegisterForm } from "@/components/register-form";
+
+export const metadata: Metadata = {
+  title: "Create account",
+  robots: { index: false, follow: false },
+};
 
 export default async function RegisterPage({
   searchParams,

@@ -12,8 +12,10 @@ export async function storedFileResponse(
   name: string,
   mimeType?: string,
 ) {
-  if (url.startsWith("/"))
+  if (url.startsWith("/") && !url.startsWith("//"))
     return NextResponse.redirect(new URL(url, request.url));
+  if (url.startsWith("//"))
+    return NextResponse.json({ error: "Invalid file reference" }, { status: 400 });
   if (url.startsWith(LOCAL_PRIVATE_FILE_PREFIX)) {
     try {
       const file = await readLocalPrivateFile(url);
@@ -69,7 +71,7 @@ export async function storedFileResponse(
 
 function privateFileHeaders(name: string, mimeType?: string, size?: number) {
   const headers = new Headers({
-    "Cache-Control": "private, max-age=300",
+    "Cache-Control": "private, no-store, max-age=0",
     "Content-Disposition": `inline; filename="download"; filename*=UTF-8''${encodeURIComponent(name)}`,
     "Content-Type": mimeType || "application/octet-stream",
     "X-Content-Type-Options": "nosniff",

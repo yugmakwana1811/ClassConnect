@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -11,6 +12,11 @@ import { Alert } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { PasswordField } from "@/components/password-field";
 import { loginAction } from "@/app/actions";
+
+export const metadata: Metadata = {
+  title: "Sign in",
+  robots: { index: false, follow: false },
+};
 
 export default async function Login({
   searchParams,

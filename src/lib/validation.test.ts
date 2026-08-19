@@ -9,7 +9,9 @@ import {
   emailChangeSchema,
   generatedContentSchema,
   joinClassSchema,
+  loginSchema,
   parentStudentLinkSchema,
+  passwordChangeSchema,
   quizSchema,
   registerSchema,
   reviewSchema,
@@ -82,6 +84,22 @@ describe("EduGrade validation", () => {
         grade: "8",
       }).success,
     ).toBe(true);
+  });
+  it("rejects oversized passwords before expensive password hashing", () => {
+    const oversized = "A".repeat(129);
+    expect(
+      loginSchema.safeParse({
+        email: "teacher@example.com",
+        password: oversized,
+      }).success,
+    ).toBe(false);
+    expect(
+      passwordChangeSchema.safeParse({
+        currentPassword: oversized,
+        newPassword: "NewSecurePass!42",
+        confirmPassword: "NewSecurePass!42",
+      }).success,
+    ).toBe(false);
   });
   it("allows a parent account without student-only grade details", () => {
     expect(

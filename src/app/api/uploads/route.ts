@@ -11,14 +11,23 @@ const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser();
+    if (!user)
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 },
+      );
+    if (user.role !== "STUDENT")
+      return NextResponse.json(
+        { error: "Student access is required" },
+        { status: 403 },
+      );
+
     const body = (await request.json()) as HandleUploadBody;
     const response = await handleUpload({
       body,
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
-        const user = await getCurrentUser();
-        if (!user || user.role !== "STUDENT")
-          throw new Error("Authentication required");
         let payload: unknown = null;
         try {
           payload = clientPayload ? JSON.parse(clientPayload) : null;

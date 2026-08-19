@@ -126,7 +126,13 @@ export function StudentProgressGraph() {
 
       {data && chart && data.assessments.length ? (
         <>
-          <div style={{ overflowX: "auto", paddingBottom: ".5rem" }}>
+          <div
+            className="table-wrap"
+            role="region"
+            aria-label="Student progress chart"
+            tabIndex={0}
+            style={{ paddingBottom: ".5rem" }}
+          >
             <svg
               viewBox={`0 0 ${chart.width} ${chart.height}`}
               role="img"

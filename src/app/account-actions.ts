@@ -162,6 +162,17 @@ export async function changePasswordAction(form: FormData) {
       parsed.error.issues[0]?.message ?? "Check the password fields.",
       returnPath,
     );
+  const throttleKey = await authThrottleKey("password-change", user.id);
+  try {
+    await assertAuthAllowed(throttleKey);
+  } catch (error) {
+    fail(
+      error instanceof Error
+        ? error.message
+        : "Password change is temporarily unavailable.",
+      returnPath,
+    );
+  }
   const stored = await db.user.findUnique({
     where: { id: user.id },
     select: { passwordHash: true },
@@ -169,8 +180,11 @@ export async function changePasswordAction(form: FormData) {
   if (
     !stored ||
     !(await bcrypt.compare(parsed.data.currentPassword, stored.passwordHash))
-  )
+  ) {
+    await recordAuthFailure(throttleKey);
     fail("Current password is incorrect.", returnPath);
+  }
+  await clearAuthFailures(throttleKey);
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
   await db.$transaction([
     db.user.update({ where: { id: user.id }, data: { passwordHash } }),

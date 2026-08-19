@@ -438,7 +438,13 @@ export default async function StudentInsights({
           </span>
         </div>
         {assessmentRows.length ? (
-          <div className="card table-wrap" style={{ border: 0 }}>
+          <div
+            className="card table-wrap"
+            role="region"
+            aria-label="Assessment history"
+            tabIndex={0}
+            style={{ border: 0 }}
+          >
             <table>
               <thead>
                 <tr>

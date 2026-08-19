@@ -25,6 +25,8 @@ import { logoutAction } from "@/app/actions";
 import { initials } from "@/lib/utils";
 import type { Role } from "@prisma/client";
 import { NavigationFeedbackProvider } from "./navigation-feedback";
+import { MobileWorkspaceMenu } from "./mobile-workspace-nav";
+import { splitMobileNavigation } from "@/lib/mobile-navigation";
 
 type LinkItem = {
   href: string;
@@ -154,7 +156,10 @@ export function AppShell({
 }) {
   const groups = groupsForRole(user.role);
   const links = groups.flatMap((group) => group.items);
-  const mobile = links.slice(0, 4);
+  const { primary: mobilePrimary, overflow: mobileOverflow } =
+    splitMobileNavigation(links);
+  const mobilePrimaryHrefs = new Set(mobilePrimary.map((item) => item.href));
+  const mobileMoreHrefs = mobileOverflow.map((item) => item.href);
   return (
     <NavigationFeedbackProvider>
       <div className="shell">
@@ -235,8 +240,12 @@ export function AppShell({
           </header>
           <MotionPageTransition>{children}</MotionPageTransition>
         </main>
-        <nav className="mobile-nav">
-          {mobile.map(({ href, label, icon: Icon, eager }) => (
+        <nav
+          className="mobile-nav"
+          aria-label="Mobile workspace navigation"
+          data-items={mobilePrimary.length + 1}
+        >
+          {mobilePrimary.map(({ href, label, icon: Icon, eager }) => (
             <AppNavLink
               href={href}
               label={label}
@@ -245,6 +254,54 @@ export function AppShell({
               key={href}
             />
           ))}
+          <MobileWorkspaceMenu
+            label={roleLabel(user.role)}
+            activeHrefs={mobileMoreHrefs}
+          >
+            {groups.map((group) => {
+              const items = group.items.filter(
+                (item) => !mobilePrimaryHrefs.has(item.href),
+              );
+              if (!items.length) return null;
+              return (
+                <div className="mobile-more-group" key={group.label}>
+                  <div className="nav-group-label">{group.label}</div>
+                  {items.map(({ href, label, icon: Icon, eager }) => (
+                    <AppNavLink
+                      href={href}
+                      label={label}
+                      icon={<Icon size={18} />}
+                      eager={eager}
+                      key={href}
+                    />
+                  ))}
+                </div>
+              );
+            })}
+            <div className="mobile-more-group mobile-more-account">
+              <div className="nav-group-label">Account & support</div>
+              <Link className="nav-link" href="/account">
+                <span className="nav-icon" aria-hidden="true">
+                  <Settings size={18} />
+                </span>
+                <span>Account settings</span>
+              </Link>
+              <Link className="nav-link" href="/about">
+                <span className="nav-icon" aria-hidden="true">
+                  <HeartHandshake size={18} />
+                </span>
+                <span>Help & about</span>
+              </Link>
+              <form action={logoutAction}>
+                <button className="nav-link" type="submit">
+                  <span className="nav-icon" aria-hidden="true">
+                    <LogOut size={18} />
+                  </span>
+                  <span>Sign out</span>
+                </button>
+              </form>
+            </div>
+          </MobileWorkspaceMenu>
         </nav>
       </div>
     </NavigationFeedbackProvider>

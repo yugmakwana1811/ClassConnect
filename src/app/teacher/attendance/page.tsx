@@ -89,7 +89,12 @@ export default async function Attendance({
           </div>
           {selected.enrollments.length ? (
             <>
-              <div className="table-wrap">
+              <div
+                className="table-wrap"
+                role="region"
+                aria-label="Attendance roster"
+                tabIndex={0}
+              >
                 <table>
                   <thead>
                     <tr>
